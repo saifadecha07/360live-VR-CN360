@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#000000" />
+  <title>CN360 · VR Viewer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- FULL SCREEN CANVAS -->
+  <canvas id="c"></canvas>
+
+  <!-- MINIMAL FLOATING UI -->
+  <div id="ui">
+
+    <!-- TOP LEFT: status -->
+    <div id="status-bar">
+      <div id="status-dot"></div>
+      <span id="status-text">360 VIEWER</span>
+    </div>
+
+    <!-- CENTER: enter vr (shown only when WebXR ready) -->
+    <button id="vr-btn" style="display:none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 8h20v10a2 2 0 01-2 2H4a2 2 0 01-2-2V8z"/>
+        <circle cx="8.5" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+        <circle cx="15.5" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+      </svg>
+      ENTER VR
+    </button>
+
+    <!-- BOTTOM RIGHT: source picker -->
+    <div id="source-btns">
+
+      <!-- UPLOAD 360 IMAGE -->
+      <label id="upload-btn" title="Upload 360° image">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        UPLOAD 360
+        <input type="file" id="file-input" accept="image/*" />
+      </label>
+
+      <!-- LIVE CAM -->
+      <button id="live-btn" title="Connect live 360° camera">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="3.5"/>
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/>
+        </svg>
+        LIVE CAM
+      </button>
+
+    </div>
+
+    <!-- LIVE CAM MODAL -->
+    <div id="live-modal">
+      <div id="live-modal-box">
+        <div id="live-modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="3.5"/>
+            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/>
+          </svg>
+          LIVE 360 CAMERA
+        </div>
+
+        <div class="live-field">
+          <label>Stream URL (HLS / WebRTC)</label>
+          <input type="url" id="stream-url" placeholder="https://stream-server/live/360.m3u8" autocomplete="off" spellcheck="false" />
+        </div>
+
+        <div id="live-waiting">
+          <div id="waiting-ring"></div>
+          <span>WAITING FOR CAMERA</span>
+        </div>
+
+        <div id="live-modal-actions">
+          <button id="live-connect-btn">CONNECT</button>
+          <button id="live-cancel-btn">CANCEL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast"></div>
+
+  </div>
+
+  <!-- IMPORTMAP: Three.js -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="viewer.js"></script>
+</body>
+</html>

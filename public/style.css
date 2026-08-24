@@ -1,0 +1,412 @@
+﻿/* =====================================================
+   CN360 · VR Viewer — Minimal Fullscreen UI
+   ===================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --accent:      #00C6FF;
+  --accent-dim:  rgba(0, 198, 255, 0.14);
+  --accent-glow: rgba(0, 198, 255, 0.25);
+  --green:       #00E676;
+  --amber:       #FFB300;
+  --surface:     rgba(0, 0, 0, 0.55);
+  --border:      rgba(255, 255, 255, 0.10);
+  --border-hi:   rgba(255, 255, 255, 0.18);
+  --text:        rgba(255, 255, 255, 0.90);
+  --text-dim:    rgba(255, 255, 255, 0.40);
+  --blur:        blur(18px) saturate(160%);
+  --r:           12px;
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  color: var(--text);
+}
+
+/* ── CANVAS ─────────────────────────────────────── */
+
+#c {
+  position: fixed;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  z-index: 0;
+}
+
+#c:active { cursor: grabbing; }
+
+/* ── UI LAYER ────────────────────────────────────── */
+
+#ui {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#ui > * { pointer-events: auto; }
+
+/* ── STATUS BAR (top-left) ───────────────────────── */
+
+#status-bar {
+  position: absolute;
+  top: 18px; left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  background: var(--surface);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  pointer-events: none;
+}
+
+#status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  flex-shrink: 0;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+#status-dot.waiting {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+}
+
+#status-dot.live {
+  background: #FF3D3D;
+  box-shadow: 0 0 10px #FF3D3D;
+  animation: pulse-live 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+@keyframes pulse-live {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.3); }
+}
+
+#status-text {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+/* ── VR BUTTON (center bottom) ───────────────────── */
+
+#vr-btn {
+  position: absolute;
+  bottom: 36px;
+  left: 50%; transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 30px;
+  background: var(--surface);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--r);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: background 0.2s var(--ease),
+              box-shadow  0.2s var(--ease),
+              transform   0.15s var(--ease);
+}
+
+#vr-btn:hover {
+  background: var(--accent-dim);
+  box-shadow: 0 0 24px var(--accent-glow);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+#vr-btn:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+#vr-btn.presenting {
+  color: var(--green);
+  border-color: rgba(0,230,118,0.3);
+}
+
+#vr-btn.presenting:hover {
+  background: rgba(0,230,118,0.12);
+  box-shadow: 0 0 24px rgba(0,230,118,0.2);
+}
+
+/* ── SOURCE BUTTONS (bottom-right) ───────────────── */
+
+#source-btns {
+  position: absolute;
+  bottom: 24px; right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+#source-btns button,
+#source-btns label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  background: var(--surface);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  white-space: nowrap;
+}
+
+#source-btns button:hover,
+#source-btns label:hover {
+  border-color: var(--border-hi);
+  color: var(--text);
+  background: rgba(255,255,255,0.07);
+}
+
+#source-btns button.active {
+  color: #FF3D3D;
+  border-color: rgba(255,61,61,0.35);
+  background: rgba(255,61,61,0.1);
+}
+
+#upload-btn input[type="file"] {
+  display: none;
+}
+
+/* ── LIVE CAM MODAL ───────────────────────────────── */
+
+#live-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 200;
+}
+
+#live-modal.open {
+  display: flex;
+}
+
+#live-modal-box {
+  width: min(420px, 92vw);
+  background: rgba(8, 11, 18, 0.92);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border-hi);
+  border-radius: 18px;
+  padding: 28px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  animation: modal-in 0.2s var(--ease);
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+#live-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.live-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.live-field label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.live-field input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 13px;
+  color: var(--text);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.live-field input::placeholder { color: rgba(255,255,255,0.2); }
+
+.live-field input:focus {
+  border-color: rgba(0,198,255,0.4);
+}
+
+/* WAITING INDICATOR */
+
+#live-waiting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255,179,0,0.07);
+  border: 1px solid rgba(255,179,0,0.2);
+  border-radius: 10px;
+}
+
+#waiting-ring {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,179,0,0.2);
+  border-top-color: var(--amber);
+  animation: spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#live-waiting span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+}
+
+#live-modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+#live-modal-actions button {
+  flex: 1;
+  padding: 11px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  border: 1px solid var(--border);
+}
+
+#live-connect-btn {
+  background: var(--accent-dim);
+  border-color: rgba(0,198,255,0.3);
+  color: var(--accent);
+}
+
+#live-connect-btn:hover {
+  background: rgba(0,198,255,0.22);
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+
+#live-cancel-btn {
+  background: transparent;
+  color: var(--text-dim);
+}
+
+#live-cancel-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+}
+
+/* ── TOAST ────────────────────────────────────────── */
+
+#toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%; transform: translateX(-50%);
+  padding: 9px 18px;
+  background: rgba(8,11,18,0.88);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border-hi);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+  white-space: nowrap;
+  z-index: 300;
+}
+
+#toast.show { opacity: 1; }
+
+/* ── VR PRESENTING: hide all UI ──────────────────── */
+
+body.vr-on #ui {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease);
+}
+
+/* ── MOBILE ───────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  #vr-btn {
+    bottom: 90px;
+    padding: 12px 24px;
+  }
+
+  #source-btns {
+    bottom: 16px; right: 14px;
+  }
+
+  #source-btns button,
+  #source-btns label {
+    padding: 8px 14px;
+    font-size: 9px;
+  }
+}
