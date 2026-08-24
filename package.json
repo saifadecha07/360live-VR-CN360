@@ -1,6 +1,1 @@
-﻿{
-  "name": "cn360live",
-  "version": "1.0.0",
-  "description": "CN360 Live — 360° VR Spatial Camera Viewer",
-  "private": true
-}
+{"name":"cn360live","version":"1.0.0","description":"CN360 Live - 360 VR Viewer","private":true}
