@@ -1,0 +1,48 @@
+###############################################################
+# MediaMTX — CN360Live Relay Config
+# กล้อง: Insta360 X5
+# RTMP ขาเข้า  → path: live/x5
+# HLS ขาออก   → http://YOUR_SERVER:8888/live/x5/index.m3u8
+# WebRTC ขาออก → http://YOUR_SERVER:8889/live/x5
+###############################################################
+
+# ── GLOBAL ──────────────────────────────────────────────────
+
+# Log level: info | debug | warn
+logLevel: info
+
+# ── RTMP (รับจาก Insta360 app) ──────────────────────────────
+rtmp: yes
+rtmpAddress: :1935
+# Phase 2: เปิด rtmpEncryption + rtmpServerCert/Key สำหรับ RTMPS
+
+# ── HLS (ขาออกสู่ browser) ───────────────────────────────────
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: "*"          # CORS — Caddy จะ override ตรงนี้ใน production
+hlsSegmentDuration: 1s       # latency ~3–5 วิ (ต่ำสุดที่ stable)
+hlsPartDuration: 200ms       # Low-Latency HLS (LLHLS)
+hlsSegmentMaxSize: 50MB
+
+# ── WebRTC (ขาออก latency ~1 วิ) ─────────────────────────────
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigin: "*"       # CORS — Caddy จะ override ใน production
+# ICE UDP port range — ต้อง expose ใน docker-compose ด้วย
+webrtcICEUDPMuxAddress: :8189
+# ถ้าอยู่หลัง NAT ให้ uncomment แล้วใส่ IP สาธารณะ
+# webrtcICEHostNAT1To1IPs: [YOUR_PUBLIC_IP]
+
+# ── API (สำหรับ health check จาก camera-status.js) ───────────
+api: yes
+apiAddress: :9997
+# เปิดไว้เฉพาะ internal — ปิด expose port นี้สู่สาธารณะ
+
+# ── PATHS ────────────────────────────────────────────────────
+paths:
+  live/x5:
+    # ยอมรับ RTMP ขาเข้าจากทุก IP (MVP — ไม่มี auth)
+    # Phase 2: เพิ่ม publishUser / publishPass เพื่อป้องกัน
+    source: publisher
+
+    # record: no   # เปิดได้ถ้าอยากบันทึกไฟล์ด้วย
