@@ -63,11 +63,13 @@ scene.add(sphere);
 // ─────────────────────────────────────────────────────────
 
 const state = {
-  yaw:   0,    // degrees
-  pitch: 0,    // degrees
-  fov:   90,   // degrees
+  yaw:   0,
+  pitch: 0,
+  fov:   90,
   isVR:  false,
-  source: 'default',   // 'default' | 'upload' | 'live'
+  source: 'default',
+  _video: null,
+  _stream: null,
 };
 
 // ─────────────────────────────────────────────────────────
@@ -153,17 +155,26 @@ canvas.addEventListener('wheel', e => {
 //  TEXTURE HELPERS
 // ─────────────────────────────────────────────────────────
 
+let activeDeviceId = null;
+
 function disposeCurrentTexture() {
   if (mat.map) {
     mat.map.dispose();
     mat.map = null;
   }
-  // Stop any playing video
+  // Stop any playing video / stream tracks
   if (state._video) {
     state._video.pause();
+    state._video.srcObject = null;
     state._video.src = '';
     state._video = null;
   }
+  if (state._stream) {
+    state._stream.getTracks().forEach(t => t.stop());
+    state._stream = null;
+  }
+  activeDeviceId = null;
+  document.getElementById('live-btn').classList.remove('active');
 }
 
 /** Load a static equirectangular image URL → sphere texture */
@@ -385,33 +396,137 @@ document.getElementById('file-input').addEventListener('change', e => {
 });
 
 // ─────────────────────────────────────────────────────────
-//  LIVE CAM MODAL
+//  LIVE CAM MODAL — UVC + HLS tabs
 // ─────────────────────────────────────────────────────────
 
 const modal       = document.getElementById('live-modal');
 const streamInput = document.getElementById('stream-url');
 
+// ── TAB SWITCHER ──────────────────────────────────────────
+document.querySelectorAll('.cam-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cam-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('tab-uvc').style.display = tab === 'uvc' ? '' : 'none';
+    document.getElementById('tab-hls').style.display = tab === 'hls' ? '' : 'none';
+    if (tab === 'uvc') scanCameras();
+  });
+});
+
+// ── OPEN MODAL ────────────────────────────────────────────
 document.getElementById('live-btn').addEventListener('click', () => {
   modal.classList.add('open');
-  streamInput.focus();
+  scanCameras();
 });
 
-document.getElementById('live-cancel-btn').addEventListener('click', () => {
-  modal.classList.remove('open');
-});
+// ── CLOSE ─────────────────────────────────────────────────
+function closeModal() { modal.classList.remove('open'); }
+document.getElementById('live-cancel-btn').addEventListener('click', closeModal);
+document.getElementById('live-cancel-btn-hls')?.addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-// Close on backdrop click
-modal.addEventListener('click', e => {
-  if (e.target === modal) modal.classList.remove('open');
-});
-
+// ── HLS CONNECT ───────────────────────────────────────────
 document.getElementById('live-connect-btn').addEventListener('click', () => {
   const url = streamInput.value.trim();
   if (!url) { toast('Please enter a stream URL'); return; }
-  modal.classList.remove('open');
+  closeModal();
   setStatus('WAITING…', 'waiting');
   setLiveStream(url);
 });
+
+// ── UVC CAMERA SCAN ───────────────────────────────────────
+
+async function scanCameras() {
+  const listEl    = document.getElementById('cam-list');
+  const scanningEl = document.getElementById('cam-scanning');
+  listEl.innerHTML = '';
+  scanningEl.style.display = 'flex';
+
+  try {
+    // Request permission first so labels are available
+    const probe = await navigator.mediaDevices.getUserMedia({ video: true });
+    probe.getTracks().forEach(t => t.stop());
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras  = devices.filter(d => d.kind === 'videoinput');
+
+    scanningEl.style.display = 'none';
+
+    if (cameras.length === 0) {
+      listEl.innerHTML = '<div class="cam-no-device">No cameras detected</div>';
+      return;
+    }
+
+    cameras.forEach(dev => {
+      const isActive = dev.deviceId === activeDeviceId;
+      const item = document.createElement('div');
+      item.className = 'cam-item' + (isActive ? ' active' : '');
+      item.innerHTML = `
+        <span class="cam-item-name">${dev.label || 'Camera ' + dev.deviceId.slice(0,6)}</span>
+        <span class="cam-item-badge ${isActive ? 'live' : 'connect'}">${isActive ? 'LIVE' : 'CONNECT'}</span>
+      `;
+      item.addEventListener('click', () => {
+        connectUVC(dev.deviceId, dev.label);
+        closeModal();
+      });
+      listEl.appendChild(item);
+    });
+
+  } catch (err) {
+    scanningEl.style.display = 'none';
+    listEl.innerHTML = `<div class="cam-no-device">Camera permission denied<br><small>${err.message}</small></div>`;
+  }
+}
+
+// ── CONNECT UVC DEVICE ────────────────────────────────────
+async function connectUVC(deviceId, label) {
+  disposeCurrentTexture();
+  setStatus('CONNECTING…', 'waiting');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: { exact: deviceId },
+        width:    { ideal: 3840 },
+        height:   { ideal: 1920 },
+        frameRate: { ideal: 30 },
+      },
+      audio: false,
+    });
+
+    const video = document.createElement('video');
+    video.srcObject  = stream;
+    video.muted      = true;
+    video.playsInline = true;
+    video.autoplay   = true;
+    await video.play();
+
+    const tex = new THREE.VideoTexture(video);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter  = THREE.LinearFilter;
+    tex.magFilter  = THREE.LinearFilter;
+
+    mat.map = tex;
+    mat.needsUpdate = true;
+
+    state._video    = video;
+    state._stream   = stream;
+    state.source    = 'live';
+    activeDeviceId  = deviceId;
+
+    const camName = label ? label.replace(/\s*\(.*\)/, '') : 'Camera';
+    setStatus(camName.toUpperCase(), 'live');
+    document.getElementById('live-btn').classList.add('active');
+    toast(`${camName} connected`);
+
+  } catch (err) {
+    console.error('[CN360] UVC connect failed', err);
+    toast('Failed to connect camera');
+    setStatus('360 VIEWER', 'ready');
+    useDefaultTexture();
+  }
+}
 
 // ─────────────────────────────────────────────────────────
 //  WEBXR

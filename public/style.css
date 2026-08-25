@@ -410,3 +410,143 @@ body.vr-on #ui {
     font-size: 9px;
   }
 }
+
+/* ── CAM MODAL TABS ──────────────────────────────── */
+
+#cam-tabs {
+  display: flex;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.cam-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 6px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.cam-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(0,198,255,0.25);
+}
+
+.cam-tab:hover:not(.active) {
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+
+/* ── CAMERA LIST ─────────────────────────────────── */
+
+#cam-list-wrap {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#cam-scanning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0 6px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.cam-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.cam-item:hover {
+  border-color: rgba(0,198,255,0.3);
+  background: var(--accent-dim);
+}
+
+.cam-item.active {
+  border-color: rgba(0,230,118,0.4);
+  background: rgba(0,230,118,0.08);
+}
+
+.cam-item-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cam-item-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.cam-item-badge.live {
+  background: rgba(0,230,118,0.15);
+  color: var(--green);
+  border: 1px solid rgba(0,230,118,0.3);
+}
+
+.cam-item-badge.connect {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(0,198,255,0.25);
+}
+
+.cam-no-device {
+  padding: 12px 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ── CLOSE BUTTON ────────────────────────────────── */
+
+#live-cancel-btn {
+  width: 100%;
+  padding: 9px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  transition: all 0.2s var(--ease);
+}
+
+#live-cancel-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+}

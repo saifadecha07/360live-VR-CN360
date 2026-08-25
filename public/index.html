@@ -46,8 +46,8 @@
         <input type="file" id="file-input" accept="image/*" />
       </label>
 
-      <!-- LIVE CAM -->
-      <button id="live-btn" title="Connect live 360° camera">
+      <!-- LIVE CAM (UVC direct) -->
+      <button id="live-btn" title="Connect live camera (UVC/USB)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="3.5"/>
           <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/>
@@ -65,23 +65,39 @@
             <circle cx="12" cy="12" r="3.5"/>
             <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/>
           </svg>
-          LIVE 360 CAMERA
+          LIVE CAMERA
         </div>
 
-        <div class="live-field">
-          <label>Stream URL (HLS / WebRTC)</label>
-          <input type="url" id="stream-url" placeholder="https://stream-server/live/360.m3u8" autocomplete="off" spellcheck="false" />
+        <!-- TAB SWITCHER -->
+        <div id="cam-tabs">
+          <button class="cam-tab active" data-tab="uvc">USB / UVC</button>
+          <button class="cam-tab" data-tab="hls">HLS Stream</button>
         </div>
 
-        <div id="live-waiting">
-          <div id="waiting-ring"></div>
-          <span>WAITING FOR CAMERA</span>
+        <!-- UVC PANEL -->
+        <div id="tab-uvc" class="tab-panel">
+          <div id="cam-list-wrap">
+            <div id="cam-scanning">
+              <div id="waiting-ring"></div>
+              <span>SCANNING FOR CAMERAS…</span>
+            </div>
+            <div id="cam-list"></div>
+          </div>
         </div>
 
-        <div id="live-modal-actions">
-          <button id="live-connect-btn">CONNECT</button>
-          <button id="live-cancel-btn">CANCEL</button>
+        <!-- HLS PANEL -->
+        <div id="tab-hls" class="tab-panel" style="display:none">
+          <div class="live-field">
+            <label>Stream URL (HLS / WebRTC)</label>
+            <input type="url" id="stream-url" placeholder="https://stream-server/live/360.m3u8" autocomplete="off" spellcheck="false" />
+          </div>
+          <div id="live-modal-actions">
+            <button id="live-connect-btn">CONNECT</button>
+            <button id="live-cancel-btn-hls">CANCEL</button>
+          </div>
         </div>
+
+        <button id="live-cancel-btn" style="margin-top:4px">CLOSE</button>
       </div>
     </div>
 
