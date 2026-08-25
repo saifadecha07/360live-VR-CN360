@@ -36,23 +36,32 @@ if errorlevel 1 (
 )
 
 :: ── รัน MediaMTX ─────────────────────────────────────────────
-echo  [1/3] Starting MediaMTX...
+echo  [1/4] Starting MediaMTX...
 start "MediaMTX" /min mediamtx "%~dp0mediamtx.yml"
 timeout /t 2 /nobreak >nul
 
 :: ── รัน ngrok TCP tunnel สำหรับ RTMP (port 1935) ─────────────
-echo  [2/3] Starting ngrok RTMP tunnel (port 1935)...
+echo  [2/4] Starting ngrok RTMP tunnel (port 1935)...
 start "ngrok-rtmp" /min ngrok tcp 1935 --log=stdout --log-format=json
 
 :: ── รัน ngrok HTTP tunnel สำหรับ HLS/WebRTC (port 8888) ──────
 :: หมายเหตุ: ngrok free plan รัน tunnel พร้อมกัน 1 session
 ::            ถ้าต้องการทั้ง RTMP และ HLS ต้องใช้ ngrok config file
 ::            หรืออัปเกรด plan — ดู README สำหรับรายละเอียด
-echo  [2/3] Starting ngrok HLS tunnel (port 8888)...
+echo  [2/4] Starting ngrok HLS tunnel (port 8888)...
 start "ngrok-hls" /min ngrok http 8888 --log=stdout --log-format=json
 
+:: ── รัน Viewport API (yaw/pitch/fov -> JPEG, ต้องมี python) ──
+where python >nul 2>&1
+if not errorlevel 1 (
+    echo  [3/4] Starting Viewport API (port 8095)...
+    start "ViewportAPI" /min python "%~dp0view_server.py"
+) else (
+    echo  [3/4] ข้าม Viewport API — ไม่พบ python ใน PATH
+)
+
 :: ── รอให้ ngrok เริ่มทำงาน ───────────────────────────────────
-echo  [3/3] Waiting for ngrok to initialize...
+echo  [4/4] Waiting for ngrok to initialize...
 timeout /t 4 /nobreak >nul
 
 :: ── ดึง URL จาก ngrok API ─────────────────────────────────────
@@ -93,6 +102,10 @@ echo     ใส่ HLS URL:
 echo     http://^<ngrok-http-url^>/live/x5/index.m3u8
 echo.
 echo  3. กด CONNECT — รอสักครู่จนสตรีมขึ้น
+echo.
+echo  4. ทดสอบ Viewport API (ตัดภาพตามมุม yaw/pitch):
+echo     http://localhost:8095/api/view?yaw=0^&pitch=0^&fov=90^&mode=360
+echo     เปิด public/view-test.html เพื่อทดลองผ่านหน้าเว็บ
 echo.
 echo  ================================================
 echo   หมายเหตุ: URL จะเปลี่ยนทุกครั้งที่รีสตาร์ท ngrok

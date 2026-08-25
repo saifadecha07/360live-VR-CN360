@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CN360 · Viewport API Test</title>
+<style>
+  :root {
+    --accent: #00C6FF;
+    --accent-dim: rgba(0, 198, 255, 0.14);
+    --surface: rgba(255, 255, 255, 0.04);
+    --border: rgba(255, 255, 255, 0.10);
+    --text: rgba(255, 255, 255, 0.90);
+    --text-dim: rgba(255, 255, 255, 0.45);
+    --green: #00E676;
+    --red: #FF5C5C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #05070C;
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+  }
+  h1 {
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  p.sub { color: var(--text-dim); font-size: 12px; margin-bottom: 24px; text-align: center; max-width: 480px; }
+  .panel {
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+  label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 140px; }
+  input[type="url"], input[type="text"] {
+    width: 100%;
+    background: #0A0D14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 11px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+  input[type="url"]:focus, input[type="text"]:focus { border-color: var(--accent); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .slider-val { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .modes { display: flex; gap: 8px; margin-bottom: 16px; }
+  .modes button {
+    flex: 1;
+    padding: 9px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .modes button.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  #fov-row.disabled { opacity: 0.35; pointer-events: none; }
+  #fetch-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #001018;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+  #fetch-btn:active { opacity: 0.85; }
+  #status-line { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-dim); margin-top: 10px; }
+  #status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); flex: none; }
+  #status-dot.up { background: var(--green); }
+  #status-dot.down { background: var(--red); }
+  #url-out {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    word-break: break-all;
+    background: #0A0D14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 14px;
+  }
+  #img-wrap {
+    width: 100%;
+    max-width: 640px;
+    aspect-ratio: 16/9;
+    background: #0A0D14;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #img-wrap img { width: 100%; height: 100%; object-fit: contain; display: none; }
+  #img-placeholder { color: var(--text-dim); font-size: 12px; text-align: center; padding: 20px; }
+  #img-placeholder.err { color: var(--red); }
+</style>
+</head>
+<body>
+
+  <h1>Viewport API Test</h1>
+  <p class="sub">
+    ส่งตำแหน่งมุม (yaw / pitch / fov) ไปยัง Viewport API เพื่อดึงภาพ 2D
+    ที่ตัดจากสตรีม 360 แบบ real-time &mdash; รองรับโหมด 360 (rectilinear crop)
+    และ 180 (fisheye hemisphere)
+  </p>
+
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label>Viewport API base URL</label>
+        <input type="url" id="base-url" value="http://localhost:8095" spellcheck="false" />
+      </div>
+      <div>
+        <label>Path (MediaMTX stream name)</label>
+        <input type="text" id="path" value="live/x5" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="modes">
+      <button class="mode-btn active" data-mode="360">360° &mdash; flat crop</button>
+      <button class="mode-btn" data-mode="180">180° &mdash; fisheye</button>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Yaw <span class="slider-val" id="yaw-val">0</span>&deg;</label>
+        <input type="range" id="yaw" min="-180" max="180" value="0" step="1" />
+      </div>
+      <div>
+        <label>Pitch <span class="slider-val" id="pitch-val">0</span>&deg;</label>
+        <input type="range" id="pitch" min="-90" max="90" value="0" step="1" />
+      </div>
+      <div id="fov-row">
+        <label>FOV <span class="slider-val" id="fov-val">90</span>&deg;</label>
+        <input type="range" id="fov" min="30" max="120" value="90" step="1" />
+      </div>
+    </div>
+
+    <button id="fetch-btn">FETCH VIEW</button>
+
+    <div id="status-line">
+      <span id="status-dot"></span>
+      <span id="status-text">checking relay…</span>
+    </div>
+
+    <div id="url-out">—</div>
+  </div>
+
+  <div id="img-wrap">
+    <div id="img-placeholder">No image fetched yet</div>
+    <img id="result-img" alt="Requested viewport" />
+  </div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const baseUrlEl = $('base-url'), pathEl = $('path');
+  const yawEl = $('yaw'), pitchEl = $('pitch'), fovEl = $('fov');
+  const yawVal = $('yaw-val'), pitchVal = $('pitch-val'), fovVal = $('fov-val');
+  const fovRow = $('fov-row');
+  const urlOut = $('url-out');
+  const img = $('result-img'), placeholder = $('img-placeholder');
+  const statusDot = $('status-dot'), statusText = $('status-text');
+
+  let mode = '360';
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      fovRow.classList.toggle('disabled', mode === '180');
+      updateUrlPreview();
+    });
+  });
+
+  [yawEl, pitchEl, fovEl].forEach(el => el.addEventListener('input', () => {
+    yawVal.textContent = yawEl.value;
+    pitchVal.textContent = pitchEl.value;
+    fovVal.textContent = fovEl.value;
+    updateUrlPreview();
+  }));
+  [baseUrlEl, pathEl].forEach(el => el.addEventListener('input', updateUrlPreview));
+
+  function buildUrl() {
+    const base = baseUrlEl.value.trim().replace(/\/$/, '');
+    const params = new URLSearchParams({
+      yaw: yawEl.value,
+      pitch: pitchEl.value,
+      mode,
+      path: pathEl.value.trim() || 'live/x5',
+    });
+    if (mode === '360') params.set('fov', fovEl.value);
+    return `${base}/api/view?${params.toString()}`;
+  }
+
+  function updateUrlPreview() {
+    urlOut.textContent = buildUrl();
+  }
+
+  async function checkStatus() {
+    const base = baseUrlEl.value.trim().replace(/\/$/, '');
+    try {
+      const res = await fetch(`${base}/api/view/status`, { cache: 'no-store' });
+      const data = await res.json();
+      const up = data.relay === 'up';
+      statusDot.className = up ? 'up' : 'down';
+      statusText.textContent = up ? 'relay reachable — RTSP :8554 up' : 'relay unreachable — is MediaMTX/the camera running?';
+    } catch (err) {
+      statusDot.className = 'down';
+      statusText.textContent = `cannot reach view-server at ${base}`;
+    }
+  }
+
+  $('fetch-btn').addEventListener('click', async () => {
+    const url = buildUrl();
+    updateUrlPreview();
+    placeholder.classList.remove('err');
+    placeholder.textContent = 'Fetching…';
+    placeholder.style.display = 'flex';
+    img.style.display = 'none';
+
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      img.src = URL.createObjectURL(blob);
+      img.onload = () => {
+        placeholder.style.display = 'none';
+        img.style.display = 'block';
+      };
+    } catch (err) {
+      placeholder.classList.add('err');
+      placeholder.textContent = `Failed: ${err.message}`;
+    }
+    checkStatus();
+  });
+
+  updateUrlPreview();
+  checkStatus();
+  setInterval(checkStatus, 8000);
+</script>
+</body>
+</html>

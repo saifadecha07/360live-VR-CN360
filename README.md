@@ -165,6 +165,92 @@ ngrok start rtmp hls
 
 ---
 
+## Viewport API — request an angle, get a 2D image back
+
+นอกจาก client-side 360° viewer (`viewer.js`) แล้ว ยังมี **Viewport API** —
+server ท้องถิ่นตัวเล็ก ๆ ที่รับพารามิเตอร์มุม (`yaw` / `pitch` / `fov`)
+พร้อม option ดึงแบบ `360` (rectilinear crop ปกติ) หรือ `180`
+(fisheye hemisphere) แล้วส่งภาพ JPEG กลับมาให้ทันที — เหมาะสำหรับทดสอบผ่าน
+web request/curl/browser โดยตรง หรือต่อยอดไปยังอุปกรณ์ที่ไม่มี 3D engine
+
+```
+Insta360 X5 ──RTMP──▶ MediaMTX ──RTSP :8554──▶ ffmpeg (v360 filter) ──▶ JPEG
+                                                       ▲
+                                          GET /api/view?yaw=&pitch=&fov=&mode=
+```
+
+ใช้แค่ Python 3 (standard library) + `relay/ffmpeg.exe` ที่มีอยู่แล้ว
+ไม่ต้องติดตั้งอะไรเพิ่ม
+
+### รัน
+
+`relay/start.bat` (หรือ `start.sh`) รัน Viewport API ให้อัตโนมัติเป็นขั้นที่ 3
+อยู่แล้ว (ถ้ามี `python` ใน PATH) หรือรันแยกเองก็ได้:
+
+```bat
+relay\view_start.bat
+```
+```bash
+./relay/view_start.sh
+```
+
+Default listen ที่ `http://localhost:8095`
+
+### ใช้งาน
+
+```
+GET /api/view?yaw=<-180..180>&pitch=<-90..90>&fov=<30..120>&mode=360|180&path=live/x5
+```
+
+| Param | ค่าเริ่มต้น | ความหมาย |
+|---|---|---|
+| `yaw` | `0` | มุมหมุนแนวนอน (องศา) |
+| `pitch` | `0` | มุมเงย/ก้ม (องศา) |
+| `fov` | `90` | มุมมอง — ใช้เฉพาะ `mode=360` |
+| `mode` | `360` | `360` = ตัดภาพ rectilinear ปกติ, `180` = fisheye ครึ่งทรงกลม 180° รอบจุด yaw/pitch |
+| `path` | `live/x5` | ชื่อ path ของสตรีมใน MediaMTX |
+
+ตัวอย่าง:
+```
+http://localhost:8095/api/view?yaw=90&pitch=0&fov=90&mode=360
+http://localhost:8095/api/view?yaw=180&pitch=-10&mode=180
+```
+
+เช็คว่า relay พร้อมไหม (ไม่ต้อง spawn ffmpeg):
+```
+GET /api/view/status   →  {"relay": "up" | "down"}
+```
+
+> **latency:** ffmpeg ต้องรอ keyframe (IDR) แรกที่มาถึงก่อนถึงจะ crop ภาพได้
+> ยิ่ง keyframe interval ของสตรีมสั้น (ปกติ live stream ~1-2s) ยิ่งตอบเร็ว
+> ถ้าตอบช้าผิดปกติ (>5s) ให้เช็ค encoder settings ฝั่งกล้อง
+
+### ทดลองผ่านหน้าเว็บ
+
+เปิด [`public/view-test.html`](public/view-test.html) — มี slider ปรับ
+yaw/pitch/fov, toggle 360/180, ปุ่ม fetch และแสดง URL ที่ยิงจริงให้คัดลอกไปใช้
+กับ curl ได้ด้วย
+
+---
+
+## เชื่อมแว่น VR (Pico 4) เข้ากับสตรีมจริง
+
+ส่วนนี้ทำงานอยู่แล้วใน `viewer.js`/`index.html` ไม่ต้องแก้โค้ดเพิ่ม —
+แค่ต่อ hardware ตามขั้นตอน relay ด้านบน แล้ว:
+
+1. เปิด CN360Live บน browser ของ Pico 4 (ต้องเป็น HTTPS หรือ localhost —
+   WebXR ต้องการ secure context)
+2. กด **LIVE CAM** → tab **HLS Stream** → ใส่ HLS URL ของสตรีม Insta360 X5
+   (ngrok URL หรือ URL ในเครือข่ายเดียวกัน) → **CONNECT**
+3. กด **ENTER VR** — Pico 4 จะเข้าสู่โหมด immersive-vr พร้อม head tracking
+   บนสตรีมสด
+
+> ถ้าโหลดวิดีโอไม่ขึ้นบน Pico 4 ทั้งที่ต่อ HLS URL ถูกแล้ว มักเป็นเพราะ
+> mixed content (หน้าเว็บ HTTPS แต่สตรีม HTTP) — ลองใช้ `relay/cloudflared.exe`
+> เปิด HTTPS tunnel ให้ MediaMTX แทน ngrok plain HTTP
+
+---
+
 ## Camera Status API
 
 ```
@@ -189,13 +275,17 @@ GET /api/camera-status?relay=http://abc123.ngrok.io
 ├── public/
 │   ├── index.html        ← UI หลัก
 │   ├── viewer.js         ← Three.js sphere + WebXR
-│   └── style.css         ← Dark cinematic UI
+│   ├── style.css         ← Dark cinematic UI
+│   └── view-test.html    ← Viewport API test page (yaw/pitch/fov -> image)
 ├── api/
 │   └── camera-status.js  ← Vercel serverless (mock + optional relay check)
 ├── relay/
 │   ├── mediamtx.yml      ← MediaMTX config
-│   ├── start.bat         ← Windows launcher
-│   └── start.sh          ← Mac/Linux launcher
+│   ├── start.bat         ← Windows launcher (MediaMTX + ngrok + Viewport API)
+│   ├── start.sh          ← Mac/Linux launcher
+│   ├── view_server.py    ← Viewport API (yaw/pitch/fov -> JPEG via ffmpeg v360)
+│   ├── view_start.bat    ← Viewport API launcher (standalone, Windows)
+│   └── view_start.sh     ← Viewport API launcher (standalone, Mac/Linux)
 ├── deploy.bat            ← Git push helper
 └── README.md
 ```

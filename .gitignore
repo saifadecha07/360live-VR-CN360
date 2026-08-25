@@ -1,0 +1,7 @@
+# Relay: downloaded binaries + generated TLS material — not committed
+relay/*.exe
+relay/auto.key
+relay/auto.crt
+relay/LICENSE
+relay/mediamtx.log
+relay/recordings/

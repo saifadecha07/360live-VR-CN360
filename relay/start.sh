@@ -40,18 +40,19 @@ cleanup() {
   kill "$MTX_PID"  2>/dev/null || true
   kill "$NGROK_TCP_PID" 2>/dev/null || true
   kill "$NGROK_HLS_PID" 2>/dev/null || true
+  kill "${VIEW_PID:-}" 2>/dev/null || true
   echo " Done."
 }
 trap cleanup EXIT INT TERM
 
 # ── รัน MediaMTX ─────────────────────────────────────────────
-echo " [1/3] Starting MediaMTX..."
+echo " [1/4] Starting MediaMTX..."
 mediamtx "$CONFIG" &
 MTX_PID=$!
 sleep 1
 
 # ── รัน ngrok TCP tunnel (RTMP :1935) ────────────────────────
-echo " [2/3] Starting ngrok RTMP tunnel (port 1935)..."
+echo " [2/4] Starting ngrok RTMP tunnel (port 1935)..."
 ngrok tcp 1935 --log=stdout --log-format=json > /tmp/ngrok_rtmp.log 2>&1 &
 NGROK_TCP_PID=$!
 
@@ -59,12 +60,23 @@ NGROK_TCP_PID=$!
 # หมายเหตุ: ngrok free plan รัน 1 session (= 1 agent process)
 #            2 tunnels ใน session เดียวต้องใช้ ngrok config file
 #            ดู README สำหรับวิธีตั้งค่า ngrok.yml
-echo " [2/3] Starting ngrok HLS tunnel (port 8888)..."
+echo " [2/4] Starting ngrok HLS tunnel (port 8888)..."
 ngrok http 8888 --log=stdout --log-format=json > /tmp/ngrok_hls.log 2>&1 &
 NGROK_HLS_PID=$!
 
+# ── รัน Viewport API (yaw/pitch/fov -> JPEG, ต้องมี python3) ──
+PY=python3
+command -v "$PY" &>/dev/null || PY=python
+if command -v "$PY" &>/dev/null; then
+  echo " [3/4] Starting Viewport API (port 8095)..."
+  "$PY" "$SCRIPT_DIR/view_server.py" &
+  VIEW_PID=$!
+else
+  echo " [3/4] ข้าม Viewport API — ไม่พบ python3/python ใน PATH"
+fi
+
 # ── รอให้ ngrok initialize ───────────────────────────────────
-echo " [3/3] Waiting for ngrok to initialize..."
+echo " [4/4] Waiting for ngrok to initialize..."
 sleep 4
 
 # ── ดึง URL จาก ngrok local API ──────────────────────────────
@@ -109,6 +121,10 @@ echo "    ใส่ HLS URL:"
 echo "    http://<ngrok-http-url>/live/x5/index.m3u8"
 echo ""
 echo " 3. กด CONNECT — รอสักครู่จนสตรีมขึ้น"
+echo ""
+echo " 4. ทดสอบ Viewport API (ตัดภาพตามมุม yaw/pitch):"
+echo "    http://localhost:8095/api/view?yaw=0&pitch=0&fov=90&mode=360"
+echo "    เปิด public/view-test.html เพื่อทดลองผ่านหน้าเว็บ"
 echo ""
 echo " ================================================"
 echo "  หมายเหตุ: URL จะเปลี่ยนทุกครั้งที่รีสตาร์ท ngrok"
