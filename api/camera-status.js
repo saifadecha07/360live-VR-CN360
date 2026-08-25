@@ -1,14 +1,25 @@
 ﻿/**
  * GET /api/camera-status
  *
- * ถ้าส่ง ?relay=https://stream.yourdomain.com จะพยายาม
- * เช็ค MediaMTX API (/v3/paths/list) แล้วคืนสถานะจริง
+ * Usage:
+ *   /api/camera-status              → mock (Phase 1)
+ *   /api/camera-status?relay=URL    → เช็ค MediaMTX API จริง
  *
- * ข้อจำกัด:
- *   Vercel serverless function อยู่บน infrastructure ของ Vercel
- *   (ไม่ใช่ VPS เดียวกับ relay) ดังนั้นการเช็คจะทำงานได้ก็ต่อเมื่อ
- *   relay server เปิด port 9997 หรือ expose ผ่าน HTTPS เท่านั้น
- *   ถ้า relay อยู่ใน private network / ไม่มี public URL → fallback mock
+ * ──────────────────────────────────────────────────────────
+ * ข้อจำกัดสำคัญ (local + ngrok setup):
+ *
+ *   Vercel serverless function รันบน cloud ของ Vercel
+ *   relay (MediaMTX) รันบนเครื่อง local ของผู้ใช้
+ *
+ *   การเช็คจะทำงานได้ก็ต่อเมื่อ:
+ *     1. ผู้ใช้ expose ngrok HTTP tunnel สำหรับ port 9997
+ *        แล้วส่ง URL นั้นมาใน ?relay= param
+ *     2. หรือ relay รันบน VPS ที่มี public IP
+ *
+ *   ถ้าเครื่อง local ปิด หรือ ngrok URL เปลี่ยน (เกิดทุกครั้ง
+ *   ที่ restart) → Vercel function จะเข้าไม่ถึง → คืน 'unreachable'
+ *   ซึ่งเป็นพฤติกรรมที่ถูกต้อง ไม่ใช่ bug
+ * ──────────────────────────────────────────────────────────
  */
 
 const START = Date.now();
@@ -22,26 +33,23 @@ module.exports = async function handler(req, res) {
     ? String(req.query.relay).replace(/\/$/, '')
     : null;
 
-  // ── ถ้ามี relay URL → เช็คสถานะจริง ──────────────────────
+  // ── มี relay URL → เช็คสถานะจริงจาก MediaMTX API ──────────
   if (relayBase) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3000);
+      const tid = setTimeout(() => controller.abort(), 3000);
 
-      const apiRes = await fetch(`${relayBase}/v3/paths/list`, {
+      const r = await fetch(`${relayBase}/v3/paths/list`, {
         signal: controller.signal,
         headers: { Accept: 'application/json' },
       });
-      clearTimeout(timeout);
+      clearTimeout(tid);
 
-      if (!apiRes.ok) throw new Error(`HTTP ${apiRes.status}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
-      const data = await apiRes.json();
-
-      // MediaMTX /v3/paths/list คืน { items: [ { name, ready, ... } ] }
+      const data = await r.json();
       const paths = data.items ?? [];
-      const x5 = paths.find(p => p.name === 'live/x5');
-
+      const x5    = paths.find(p => p.name === 'live/x5');
       const isLive = x5?.ready === true;
 
       return res.status(200).json({
@@ -55,28 +63,30 @@ module.exports = async function handler(req, res) {
         uptime:     Math.floor((Date.now() - START) / 1000),
         message:    isLive
           ? 'Insta360 X5 stream active'
-          : 'Relay reachable — waiting for camera',
+          : 'Relay reachable — waiting for camera to connect',
       });
+
     } catch (err) {
-      // relay ไม่ตอบ หรือ network ไม่ถึง → บอก client ตามตรง
+      // relay ไม่ตอบ: เครื่องปิด / ngrok URL เปลี่ยน / firewall block
       return res.status(200).json({
         status:  'unreachable',
         source:  'relay',
         relay:   relayBase,
-        error:   err.name === 'AbortError' ? 'timeout' : err.message,
-        message: 'Cannot reach relay API — check VPS firewall / port 9997',
+        error:   err.name === 'AbortError' ? 'timeout (3s)' : err.message,
         uptime:  Math.floor((Date.now() - START) / 1000),
+        message: 'Cannot reach relay — is the local relay running? ngrok URL may have changed.',
+        hint:    'Make sure relay/start.bat is running and pass the current ngrok API URL as ?relay=',
       });
     }
   }
 
-  // ── ไม่มี relay URL → mock (Phase 1) ─────────────────────
+  // ── ไม่มี relay URL → mock Phase 1 ───────────────────────
   return res.status(200).json({
     status:     'waiting',
     source:     'mock',
     resolution: '3840x1920',
     fps:        30,
     uptime:     Math.floor((Date.now() - START) / 1000),
-    message:    'No relay configured — pass ?relay=https://... to check live status',
+    message:    'No relay configured. Pass ?relay=<ngrok-api-url> to check live status.',
   });
 };

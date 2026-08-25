@@ -1,48 +1,38 @@
 ###############################################################
-# MediaMTX — CN360Live Relay Config
-# กล้อง: Insta360 X5
-# RTMP ขาเข้า  → path: live/x5
-# HLS ขาออก   → http://YOUR_SERVER:8888/live/x5/index.m3u8
-# WebRTC ขาออก → http://YOUR_SERVER:8889/live/x5
+# MediaMTX — CN360Live Local Relay Config
+# กล้อง : Insta360 X5
+#
+# Flow:
+#   Insta360 app  →  RTMP :1935/live/x5
+#                 →  HLS  :8888/live/x5/index.m3u8   (latency ~3-5s)
+#                 →  WebRTC :8889/live/x5             (latency ~1s)
 ###############################################################
 
-# ── GLOBAL ──────────────────────────────────────────────────
-
-# Log level: info | debug | warn
 logLevel: info
 
-# ── RTMP (รับจาก Insta360 app) ──────────────────────────────
+# ── RTMP — รับจาก Insta360 app ──────────────────────────────
 rtmp: yes
 rtmpAddress: :1935
-# Phase 2: เปิด rtmpEncryption + rtmpServerCert/Key สำหรับ RTMPS
 
-# ── HLS (ขาออกสู่ browser) ───────────────────────────────────
+# ── HLS — ขาออกสู่ browser ──────────────────────────────────
 hls: yes
 hlsAddress: :8888
-hlsAllowOrigin: "*"          # CORS — Caddy จะ override ตรงนี้ใน production
-hlsSegmentDuration: 1s       # latency ~3–5 วิ (ต่ำสุดที่ stable)
-hlsPartDuration: 200ms       # Low-Latency HLS (LLHLS)
-hlsSegmentMaxSize: 50MB
+hlsAllowOrigin: "*"
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms      # Low-Latency HLS
 
-# ── WebRTC (ขาออก latency ~1 วิ) ─────────────────────────────
+# ── WebRTC — ขาออก latency ~1s ───────────────────────────────
 webrtc: yes
 webrtcAddress: :8889
-webrtcAllowOrigin: "*"       # CORS — Caddy จะ override ใน production
-# ICE UDP port range — ต้อง expose ใน docker-compose ด้วย
+webrtcAllowOrigin: "*"
 webrtcICEUDPMuxAddress: :8189
-# ถ้าอยู่หลัง NAT ให้ uncomment แล้วใส่ IP สาธารณะ
-# webrtcICEHostNAT1To1IPs: [YOUR_PUBLIC_IP]
 
-# ── API (สำหรับ health check จาก camera-status.js) ───────────
+# ── API — ใช้ health check (local only, ไม่ต้อง expose) ──────
 api: yes
 apiAddress: :9997
-# เปิดไว้เฉพาะ internal — ปิด expose port นี้สู่สาธารณะ
 
-# ── PATHS ────────────────────────────────────────────────────
+# ── PATH ─────────────────────────────────────────────────────
 paths:
   live/x5:
-    # ยอมรับ RTMP ขาเข้าจากทุก IP (MVP — ไม่มี auth)
-    # Phase 2: เพิ่ม publishUser / publishPass เพื่อป้องกัน
     source: publisher
-
-    # record: no   # เปิดได้ถ้าอยากบันทึกไฟล์ด้วย
+    # Phase 2: เพิ่ม publishUser/publishPass เพื่อป้องกัน

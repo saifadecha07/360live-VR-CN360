@@ -1,134 +1,167 @@
 # CN360live
 
-360° VR Spatial Camera Viewer — Three.js + WebXR (Pico 4 compatible)  
-Deploy: Vercel static hosting · Relay: MediaMTX on VPS
+360° VR Spatial Camera Viewer — Three.js + WebXR (Pico 4)
+Deploy: Vercel static · Relay: MediaMTX on local machine + ngrok
 
 ---
 
 ## Features
 
 - Full-screen equirectangular 360° sphere viewer
-- Mouse / touch drag · scroll / pinch to zoom
-- Upload any local 360° image
+- Mouse / touch drag · scroll / pinch to zoom FOV
+- Upload any local 360° equirectangular image
 - Live camera stream via HLS or WebRTC URL
-- ENTER VR — WebXR immersive-vr with head tracking
+- ENTER VR — WebXR immersive-vr with head tracking (Pico 4)
 
 ---
 
-## Quick Start (local)
-
-No build step needed. Open `public/index.html` directly in a browser,  
-or use any static file server:
+## Quick Start (local preview)
 
 ```bash
 npx serve public
+# เปิด http://localhost:3000
 ```
 
 ---
 
 ## Deploy to Vercel
 
-1. Connect repo `saifadecha07/CN360live` to Vercel
+1. Connect repo `saifadecha07/360live-VR-CN360` to Vercel
 2. **Project Settings → Build & Output Settings:**
    - Framework Preset: `Other`
    - Output Directory: `public`
    - Build Command: *(empty)*
    - Install Command: *(empty)*
-3. Deploy — done
+3. Save → Deploy
 
 ---
 
-## Live Streaming Setup (Insta360 X5)
+## Live Streaming Setup (Free · Local + ngrok)
+
+ไม่ต้องเช่า VPS — รันทุกอย่างบนเครื่องของคุณ + ngrok tunnel
 
 ```
-Insta360 X5
-    │  RTMP
-    ▼
-MediaMTX (VPS / Docker)
-    ├─── HLS  → https://stream.yourdomain.com/live/x5/index.m3u8
-    └─── WebRTC → https://stream.yourdomain.com/live/x5  (WHEP)
-                                │
-                                ▼
-                    CN360Live viewer (Vercel)
-                    วางใน "Stream URL" แล้วกด CONNECT
+Insta360 X5 (Wi-Fi)
+      │  RTMP
+      ▼
+MediaMTX (เครื่อง local :1935)
+      │
+      ├── HLS    :8888  ──┐
+      └── WebRTC :8889  ──┤
+                          │  ngrok tunnel
+                          ▼
+              public URL (เปลี่ยนทุกครั้งที่ restart)
+                          │
+                          ▼
+              CN360Live (Vercel) — ใส่ URL ใน LIVE CAM
 ```
 
-### Step 1 — เตรียม VPS
+### ขั้นตอนที่ 1 — ติดตั้ง (ทำครั้งเดียว)
 
-- เช่า VPS ที่รัน Linux (Ubuntu 22.04 แนะนำ)
-- ติดตั้ง Docker + Docker Compose
-- เปิด port ใน firewall:
+**MediaMTX**
+1. ดาวน์โหลดจาก https://github.com/bluenviron/mediamtx/releases/latest
+2. เลือกไฟล์ `mediamtx_*_windows_amd64.zip` (Windows) หรือ `*_linux_amd64.tar.gz`
+3. แตกไฟล์ → copy `mediamtx.exe` ไว้ใน `relay/` หรือเพิ่มใน PATH
 
-| Port | Protocol | ใช้ทำอะไร |
-|------|----------|-----------|
-| 1935 | TCP | RTMP รับจาก Insta360 |
-| 8888 | TCP | HLS ขาออก |
-| 8889 | TCP | WebRTC signaling |
-| 8189 | UDP | WebRTC ICE media |
-| 80 / 443 | TCP | Caddy HTTPS (ถ้าใช้) |
+**ngrok**
+1. สมัครฟรีที่ https://ngrok.com
+2. ดาวน์โหลด ngrok จาก https://ngrok.com/download
+3. รัน: `ngrok config add-authtoken YOUR_AUTHTOKEN`
+   (token อยู่ใน https://dashboard.ngrok.com/get-started/your-authtoken)
 
-### Step 2 — รัน Relay
+### ขั้นตอนที่ 2 — รัน Relay
 
+**Windows** — ดับเบิ้ลคลิก หรือรันใน terminal:
+```bat
+relay\start.bat
+```
+
+**Mac / Linux:**
 ```bash
-git clone https://github.com/saifadecha07/CN360live.git
-cd CN360live/relay
-
-# (ถ้าต้องการ HTTPS ให้แก้ Caddyfile ก่อน แล้ว uncomment caddy ใน docker-compose.yml)
-
-docker compose up -d
+chmod +x relay/start.sh
+./relay/start.sh
 ```
 
-ตรวจสอบว่า relay ทำงาน:
+สคริปต์จะ:
+- รัน MediaMTX รับ RTMP ที่ port 1935
+- เปิด ngrok tunnel สำหรับ RTMP (TCP) และ HLS (HTTP)
+- ดึง public URL จาก ngrok API แสดงผลทันที
 
-```bash
-docker compose logs -f mediamtx
-# หรือ
-curl http://YOUR_VPS_IP:9997/v3/paths/list
+ตัวอย่าง output:
+```
+ ================================================
+  STREAM ENDPOINTS
+ ================================================
+
+  [tcp]   tcp://0.tcp.ngrok.io:12345   ->  localhost:1935
+  [http]  http://abc123.ngrok.io       ->  localhost:8888
 ```
 
-### Step 3 — ตั้งค่า Insta360 app
+> **ngrok free plan:** รัน 2 tunnel พร้อมกันได้ แต่ต้องอยู่ใน
+> session เดียวกัน ถ้าพบ error "session limit" ให้ดู
+> [วิธีตั้งค่า ngrok config](#ngrok-config-หลาย-tunnel) ด้านล่าง
 
-1. เปิดแอป **Insta360** บนมือถือ
-2. เชื่อมต่อกล้อง X5
-3. ไปที่ **Live** → เลือก **Custom RTMP**
+### ขั้นตอนที่ 3 — ตั้งค่า Insta360 app
+
+1. เชื่อม Wi-Fi เดียวกับเครื่องที่รัน relay (หรือใช้ ngrok URL)
+2. เปิดแอป **Insta360** → เลือกกล้อง X5
+3. ไปที่ **Live** → **Custom RTMP**
 4. ใส่ RTMP URL:
    ```
-   rtmp://YOUR_VPS_IP:1935/live/x5
+   rtmp://0.tcp.ngrok.io:12345/live/x5
    ```
+   (แทน `0.tcp.ngrok.io:12345` ด้วย TCP URL ที่ ngrok ให้มา)
 5. กด **Start Live**
 
-### Step 4 — เปิดดูใน CN360Live
+### ขั้นตอนที่ 4 — เปิดดูใน CN360Live
 
-เปิด [cn360-360vr-live.vercel.app](https://cn360-360vr-live.vercel.app)  
-กดปุ่ม **LIVE CAM** แล้วใส่ URL:
+เปิด https://cn360-360vr-live.vercel.app → กด **LIVE CAM** → ใส่ URL:
 
-**HLS (latency ~5–15 วินาที — เสถียรกว่า):**
+**HLS (latency ~3–5 วินาที — เสถียรกว่า, รองรับทุก browser):**
 ```
-https://stream.yourdomain.com/live/x5/index.m3u8
-```
-
-**WebRTC WHEP (latency ~1 วินาที — ต้องใช้ Caddy HTTPS):**
-```
-https://stream.yourdomain.com/live/x5
+http://abc123.ngrok.io/live/x5/index.m3u8
 ```
 
-> **หมายเหตุ latency:**  
-> HLS แบ่งวิดีโอเป็น segment ทำให้ delay 5–15 วิตามการตั้งค่า  
-> WebRTC ใช้ UDP peer-to-peer delay ต่ำกว่า ~1 วิ แต่ต้องการ HTTPS  
-> เพราะหน้าเว็บโหลดจาก Vercel (HTTPS) — browser จะ block mixed content  
-> ถ้า relay ยัง HTTP อยู่
+**WebRTC (latency ~1 วินาที — ต้องการ HTTPS, browser บางตัวอาจ block mixed content):**
+```
+http://abc123.ngrok.io/live/x5
+```
 
-### HTTPS สำหรับ Relay (จำเป็นถ้าใช้ WebRTC)
+กด **CONNECT**
 
-แก้ `relay/Caddyfile` — เปลี่ยน `stream.yourdomain.com` เป็น domain จริง  
-และ `https://cn360-360vr-live.vercel.app` ให้ตรงกับ URL Vercel ของคุณ  
-จากนั้น uncomment บล็อก `caddy` ใน `docker-compose.yml` แล้วรัน:
+> **latency:**
+> - HLS แบ่งเป็น segment ~1s → delay รวม 3–5s
+> - WebRTC ส่ง UDP โดยตรง → delay ~1s แต่ต้องการ HTTPS ถ้าหน้าเว็บโหลดจาก HTTPS
 
+### ข้อควรรู้
+
+| ข้อจำกัด | รายละเอียด |
+|---|---|
+| URL เปลี่ยนทุกครั้ง | ngrok free plan สร้าง URL ใหม่ทุกครั้งที่ restart — ต้องอัปเดตใน Insta360 app และ CN360Live ด้วย |
+| เครื่องต้องเปิดค้าง | MediaMTX และ ngrok ต้องรันตลอดช่วงที่สตรีม |
+| latency เพิ่มขึ้น | RTMP → ngrok → MediaMTX → HLS → ngrok → browser มี hop หลายชั้น |
+| ngrok free = 1 agent | รัน 2 tunnel ได้ใน 1 session ผ่าน config file |
+
+### ngrok config หลาย tunnel
+
+สร้างไฟล์ `~/.config/ngrok/ngrok.yml` (หรือ `%USERPROFILE%\.ngrok2\ngrok.yml` บน Windows):
+
+```yaml
+version: "2"
+authtoken: YOUR_AUTHTOKEN
+tunnels:
+  rtmp:
+    proto: tcp
+    addr: 1935
+  hls:
+    proto: http
+    addr: 8888
+```
+
+แล้วรัน:
 ```bash
-docker compose up -d
+ngrok start rtmp hls
 ```
-
-Caddy จะขอ TLS cert จาก Let's Encrypt อัตโนมัติ
 
 ---
 
@@ -136,11 +169,16 @@ Caddy จะขอ TLS cert จาก Let's Encrypt อัตโนมัติ
 
 ```
 GET /api/camera-status
-GET /api/camera-status?relay=https://stream.yourdomain.com
+GET /api/camera-status?relay=http://abc123.ngrok.io
 ```
 
-ถ้าไม่ส่ง `relay` → คืน mock  
-ถ้าส่ง `relay` → เช็ค MediaMTX API จริงและคืนสถานะ `streaming` / `waiting` / `unreachable`
+- ไม่ส่ง `relay` → คืน mock status
+- ส่ง `relay` → เช็ค MediaMTX `/v3/paths/list` จริง
+- ถ้า relay ไม่ตอบ (เครื่องปิด / ngrok URL เปลี่ยน) → คืน `"status": "unreachable"`
+
+> **หมายเหตุ:** Vercel function อยู่บน cloud ของ Vercel  
+> relay อยู่บนเครื่อง local → เช็คได้ก็ต่อเมื่อ ngrok expose port 9997  
+> หรือ relay มี public URL เท่านั้น
 
 ---
 
@@ -149,23 +187,25 @@ GET /api/camera-status?relay=https://stream.yourdomain.com
 ```
 360Live/
 ├── public/
-│   ├── index.html      ← UI หลัก
-│   ├── viewer.js       ← Three.js sphere + WebXR
-│   └── style.css       ← Dark cinematic UI
+│   ├── index.html        ← UI หลัก
+│   ├── viewer.js         ← Three.js sphere + WebXR
+│   └── style.css         ← Dark cinematic UI
 ├── api/
-│   └── camera-status.js ← Vercel serverless function
+│   └── camera-status.js  ← Vercel serverless (mock + optional relay check)
 ├── relay/
-│   ├── mediamtx.yml    ← MediaMTX config
-│   ├── docker-compose.yml
-│   └── Caddyfile       ← HTTPS reverse proxy (optional)
+│   ├── mediamtx.yml      ← MediaMTX config
+│   ├── start.bat         ← Windows launcher
+│   └── start.sh          ← Mac/Linux launcher
+├── deploy.bat            ← Git push helper
 └── README.md
 ```
 
 ---
 
-## Phase 2 Checklist (ยังไม่ได้ทำ)
+## Phase 2 Checklist
 
-- [ ] เพิ่ม publishUser/publishPass ใน mediamtx.yml
-- [ ] เปิด RTMPS (port 1936) แทน RTMP
-- [ ] ทำ UI แสดงสถานะ relay อัตโนมัติโดยดึงจาก `/api/camera-status?relay=...`
-- [ ] รองรับ HLS.js สำหรับ browser ที่ไม่ support native HLS
+- [ ] ngrok static domain (free 1 domain) เพื่อให้ URL ไม่เปลี่ยน
+- [ ] publishUser/publishPass ใน mediamtx.yml
+- [ ] HLS.js สำหรับ browser ที่ไม่ support native HLS
+- [ ] UI แสดงสถานะ relay อัตโนมัติผ่าน `/api/camera-status?relay=...`
+- [ ] RTMPS (port 1936) แทน RTMP plain
