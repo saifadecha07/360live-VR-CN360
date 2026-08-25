@@ -17,8 +17,16 @@ Deploy: Vercel static · Relay: MediaMTX on local machine + ngrok
 
 ## Quick Start (local preview)
 
+ถ้ามี Node.js:
 ```bash
 npx serve public
+# เปิด http://localhost:3000
+```
+
+ถ้าไม่มี Node.js (มีแค่ Python — ใช้ได้เหมือนกัน):
+```bash
+cd public
+python -m http.server 3000
 # เปิด http://localhost:3000
 ```
 
