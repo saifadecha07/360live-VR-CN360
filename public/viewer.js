@@ -70,6 +70,7 @@ const state = {
   source: 'default',
   _video: null,
   _stream: null,
+  _hls: null,
 };
 
 // ─────────────────────────────────────────────────────────
@@ -162,6 +163,10 @@ function disposeCurrentTexture() {
     mat.map.dispose();
     mat.map = null;
   }
+  if (state._hls) {
+    state._hls.destroy();
+    state._hls = null;
+  }
   // Stop any playing video / stream tracks
   if (state._video) {
     state._video.pause();
@@ -215,13 +220,12 @@ export function setLiveStream(url) {
   video.muted        = true;
   video.playsInline  = true;
   video.autoplay     = true;
-
-  // HLS via native <video> (Safari, Pico browser)
-  // or fall back to trying direct src
-  video.src = url;
   state._video = video;
 
-  video.addEventListener('canplay', () => {
+  const isM3u8 = /\.m3u8($|\?)/i.test(url);
+  const hasNativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
+
+  const onReady = () => {
     const tex = new THREE.VideoTexture(video);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.minFilter  = THREE.LinearFilter;
@@ -233,14 +237,31 @@ export function setLiveStream(url) {
     setStatus('LIVE', 'live');
     toast('Live stream connected');
     document.getElementById('live-btn').classList.add('active');
-  });
+  };
 
-  video.addEventListener('error', () => {
+  const onFail = () => {
     toast('Stream connection failed');
     setStatus('360', 'ready');
     document.getElementById('live-btn').classList.remove('active');
     useDefaultTexture();
-  });
+  };
+
+  // Most browsers (Chrome/Edge/Pico) don't support HLS natively — use hls.js.
+  // Safari does support it natively, so prefer that path when available.
+  if (isM3u8 && !hasNativeHls && window.Hls && window.Hls.isSupported()) {
+    const hls = new window.Hls({ enableWorker: true });
+    state._hls = hls;
+    hls.on(window.Hls.Events.MANIFEST_PARSED, onReady);
+    hls.on(window.Hls.Events.ERROR, (_evt, data) => {
+      if (data.fatal) onFail();
+    });
+    hls.loadSource(url);
+    hls.attachMedia(video);
+  } else {
+    video.src = url;
+    video.addEventListener('canplay', onReady);
+    video.addEventListener('error', onFail);
+  }
 }
 
 /** Procedural fallback equirectangular panorama */
