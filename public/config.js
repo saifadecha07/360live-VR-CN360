@@ -22,14 +22,14 @@ const _apiParam    = _params.get('api');
 
 export const RELAY_BASE = (_relayParam
   ? _relayParam.replace(/\/$/, '')
-  : 'https://bd479e26924a02.lhr.life'   // ← current relay tunnel (HLS :8888)
+  : 'https://6a20419b9ed786.lhr.life'   // ← current relay tunnel (HLS :8888)
 );
 
 // MediaMTX API base (port 9997). Needed separately because tunnel hosts
 // (localhost.run / ngrok) don't share a port-based URL pattern with HLS.
 export const API_BASE = (_apiParam
   ? _apiParam.replace(/\/$/, '')
-  : 'https://36258fb238252e.lhr.life'   // ← current relay tunnel (API :9997)
+  : 'https://c713d08869dec3.lhr.life'   // ← current relay tunnel (API :9997)
 );
 
 // Whether to use mock data when relay is not configured

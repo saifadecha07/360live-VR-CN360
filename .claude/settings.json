@@ -21,7 +21,11 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://36258fb238252e.lhr.life/v3/paths/list)",
       "Bash(curl -s https://cn360-360vr-live.vercel.app/config.js)",
-      "Bash(cmd //c \"echo fix: reintroduce hls.js fallback lost in refactor, HLS was broken on Chrome/Edge | .\\\\deploy.bat\")"
+      "Bash(cmd //c \"echo fix: reintroduce hls.js fallback lost in refactor, HLS was broken on Chrome/Edge | .\\\\deploy.bat\")",
+      "Bash(curl -s -m 5 http://127.0.0.1:9997/v3/paths/list)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"%{http_code}\\\\n\" https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"%{http_code}\\\\n\" https://36258fb238252e.lhr.life/v3/paths/list)",
+      "Bash(curl -s -m 8 \"https://cn360-360vr-live.vercel.app/api/cameras?relay=https://bd479e26924a02.lhr.life&api=https://36258fb238252e.lhr.life\")"
     ]
   }
 }
