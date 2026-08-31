@@ -1,85 +1,173 @@
-# CN360live
+# CN360Live
 
-360° VR Spatial Camera Viewer — Three.js + WebXR (Pico 4)
-Deploy: Vercel static · Relay: MediaMTX on local machine + ngrok
+**360° VR Live Camera System** — Three.js · WebXR · Insta360 X5 · Pico 4
 
----
+> เปิดเว็บ → เลือก PC Mode หรือ VR Mode → ดู Live 360° จากกล้อง Insta360 X5
+> โดยไม่ต้องเช่า VPS — รันทุกอย่างบนเครื่อง local + ngrok tunnel
 
-## Features
-
-- Full-screen equirectangular 360° sphere viewer
-- Mouse / touch drag · scroll / pinch to zoom FOV
-- Upload any local 360° equirectangular image
-- Live camera stream via HLS or WebRTC URL
-- ENTER VR — WebXR immersive-vr with head tracking (Pico 4)
+**Demo:** https://cn360-360vr-live.vercel.app
 
 ---
 
-## Quick Start (local preview)
+## สารบัญ
 
-ถ้ามี Node.js:
-```bash
-npx serve public
-# เปิด http://localhost:3000
-```
-
-ถ้าไม่มี Node.js (มีแค่ Python — ใช้ได้เหมือนกัน):
-```bash
-cd public
-python -m http.server 3000
-# เปิด http://localhost:3000
-```
-
----
-
-## Deploy to Vercel
-
-1. Connect repo `saifadecha07/360live-VR-CN360` to Vercel
-2. **Project Settings → Build & Output Settings:**
-   - Framework Preset: `Other`
-   - Output Directory: `public`
-   - Build Command: *(empty)*
-   - Install Command: *(empty)*
-3. Save → Deploy
+1. [ภาพรวม Architecture](#ภาพรวม-architecture)
+2. [หน้าจอและ Mode ต่าง ๆ](#หน้าจอและ-mode-ต่าง-ๆ)
+3. [การติดตั้ง Relay (ทำครั้งเดียว)](#การติดตั้ง-relay-ทำครั้งเดียว)
+4. [วิธีเริ่ม Live Stream](#วิธีเริ่ม-live-stream)
+5. [เปิดดูใน Browser / VR](#เปิดดูใน-browser--vr)
+6. [ตั้งค่า Relay URL ใน CN360Live](#ตั้งค่า-relay-url-ใน-cn360live)
+7. [การ Deploy Vercel](#การ-deploy-vercel)
+8. [Project Structure](#project-structure)
+9. [API Reference](#api-reference)
+10. [ngrok config หลาย tunnel](#ngrok-config-หลาย-tunnel)
+11. [ข้อจำกัดและ FAQ](#ข้อจำกัดและ-faq)
+12. [Roadmap](#roadmap)
 
 ---
 
-## Live Streaming Setup (Free · Local + ngrok)
-
-ไม่ต้องเช่า VPS — รันทุกอย่างบนเครื่องของคุณ + ngrok tunnel
+## ภาพรวม Architecture
 
 ```
-Insta360 X5 (Wi-Fi)
-      │  RTMP
-      ▼
-MediaMTX (เครื่อง local :1935)
+Insta360 X5
+(แอปมือถือ)
       │
-      ├── HLS    :8888  ──┐
-      └── WebRTC :8889  ──┤
-                          │  ngrok tunnel
-                          ▼
-              public URL (เปลี่ยนทุกครั้งที่ restart)
-                          │
-                          ▼
-              CN360Live (Vercel) — ใส่ URL ใน LIVE CAM
+      │  RTMP push  rtmp://...ngrok.io:PORT/live/x5
+      ▼
+┌─────────────────────────────────────────┐
+│  เครื่อง LOCAL (PC/Laptop ของคุณ)       │
+│                                         │
+│  MediaMTX                               │
+│   :1935  ← รับ RTMP จากกล้อง           │
+│   :8888  → HLS out  (latency ~3–5s)    │
+│   :8889  → WebRTC out (latency ~1s)    │
+│   :9997  → HTTP API (health check)     │
+│                                         │
+│  ngrok                                  │
+│   TCP tunnel  → :1935 (RTMP)           │
+│   HTTP tunnel → :8888 (HLS)            │
+└───────────────┬─────────────────────────┘
+                │  public URL
+                ▼
+   ┌────────────────────────────┐
+   │  Vercel (Cloud)            │
+   │  CN360Live frontend        │
+   │  /api/cameras  serverless  │
+   └────────────────────────────┘
+                │
+                ▼
+   Browser (PC/Mobile) · Pico 4 (WebXR)
 ```
 
-### ขั้นตอนที่ 1 — ติดตั้ง (ทำครั้งเดียว)
+---
 
-**MediaMTX**
-1. ดาวน์โหลดจาก https://github.com/bluenviron/mediamtx/releases/latest
-2. เลือกไฟล์ `mediamtx_*_windows_amd64.zip` (Windows) หรือ `*_linux_amd64.tar.gz`
-3. แตกไฟล์ → copy `mediamtx.exe` ไว้ใน `relay/` หรือเพิ่มใน PATH
+## หน้าจอและ Mode ต่าง ๆ
 
-**ngrok**
-1. สมัครฟรีที่ https://ngrok.com
+### หน้าแรก — Mode Selection
+
+```
+          CN360Live
+     LIVE 360° CAMERA SYSTEM
+
+  ┌───────────────────────────┐
+  │  🖥  PC MODE              │
+  │  Watch Live 360°          │
+  │  on Browser          →    │
+  └───────────────────────────┘
+
+  ┌───────────────────────────┐
+  │  👓  VR MODE    [WebXR ✓] │
+  │  Enter 3D Camera          │
+  │  Lobby               →    │
+  └───────────────────────────┘
+```
+
+- **PC MODE** → เข้า Camera List → เลือกกล้อง → 360° Browser Viewer
+- **VR MODE** → เข้า 3D Camera Lobby (Three.js) → เลือกกล้อง → 360° VR Viewer + WebXR
+
+### PC Mode
+
+- แสดงรายการกล้องพร้อมสถานะ 🟢 LIVE / 🟡 WAITING / 🔴 OFFLINE
+- กดกล้องเพื่อเปิด 360° viewer
+- Mouse drag หมุนกล้อง, Scroll zoom
+- ปุ่ม Fullscreen และ Enter VR (ถ้า browser รองรับ WebXR)
+- สถานะกล้อง auto-refresh ทุก 4 วินาที
+
+### VR Mode — 3D Camera Lobby
+
+- Three.js scene แบบ futuristic — grid floor, neon blue, floating camera panels
+- Panel แต่ละอันแสดงชื่อกล้อง + สถานะ + ปุ่ม VIEW CAMERA
+- คลิกหรือ gaze เพื่อเลือกกล้อง
+- Mouse drag หมุนมุมมอง (non-VR)
+- กด ENTER XR เพื่อ immersive-vr บน Pico 4 / Meta Quest
+- ปุ่ม BACK TO LOBBY และ HOME ทุกขั้นตอน
+
+### Developer Mode (ซ่อน)
+
+เข้าถึงได้ผ่าน URL:
+```
+https://your-site.vercel.app/?debug=1
+```
+ใช้ทดสอบ:
+- Procedural default panorama
+- Upload ภาพ equirectangular
+- Manual stream URL (HLS/WebRTC)
+- ตั้ง relay URL ใหม่
+
+---
+
+## การติดตั้ง Relay (ทำครั้งเดียว)
+
+### ขั้นตอนที่ 1 — ติดตั้ง MediaMTX
+
+1. เปิด https://github.com/bluenviron/mediamtx/releases/latest
+2. ดาวน์โหลดไฟล์ตามระบบปฏิบัติการ:
+   - Windows: `mediamtx_v*_windows_amd64.zip`
+   - macOS (Apple Silicon): `mediamtx_v*_darwin_arm64.tar.gz`
+   - macOS (Intel): `mediamtx_v*_darwin_amd64.tar.gz`
+   - Linux: `mediamtx_v*_linux_amd64.tar.gz`
+3. แตกไฟล์ → **copy `mediamtx.exe` (หรือ `mediamtx`) ไว้ใน `relay/`**
+
+### ขั้นตอนที่ 2 — ติดตั้ง ngrok
+
+1. สมัครบัญชีฟรีที่ https://ngrok.com
 2. ดาวน์โหลด ngrok จาก https://ngrok.com/download
-3. รัน: `ngrok config add-authtoken YOUR_AUTHTOKEN`
-   (token อยู่ใน https://dashboard.ngrok.com/get-started/your-authtoken)
+3. แตกไฟล์ → **copy `ngrok.exe` ไว้ใน `relay/`**
+4. ก็อป Authtoken จาก https://dashboard.ngrok.com/get-started/your-authtoken
+5. รันคำสั่งต่อไปนี้ใน terminal (ทำครั้งเดียว):
+   ```bat
+   ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
+   ```
 
-### ขั้นตอนที่ 2 — รัน Relay
+### ขั้นตอนที่ 3 — ตั้งค่า ngrok สำหรับ 2 tunnel (แนะนำ)
 
-**Windows** — ดับเบิ้ลคลิก หรือรันใน terminal:
+ngrok free plan รัน 2 tunnel พร้อมกันได้ในหนึ่ง agent session ต้องใช้ config file:
+
+สร้างไฟล์ `ngrok.yml` ใน `relay/`:
+```yaml
+version: "3"
+agent:
+  authtoken: YOUR_AUTHTOKEN_HERE
+
+tunnels:
+  rtmp:
+    proto: tcp
+    addr: 1935
+  hls:
+    proto: http
+    addr: 8888
+```
+
+> ถ้าไม่ทำขั้นตอนนี้ `start.bat` จะรัน tunnel ทีละอัน และอาจเจอ error
+> "session limit reached" บน free plan
+
+---
+
+## วิธีเริ่ม Live Stream
+
+### ขั้นตอนที่ 1 — รัน Relay
+
+**Windows** — ดับเบิ้ลคลิก หรือรันใน Command Prompt:
 ```bat
 relay\start.bat
 ```
@@ -90,73 +178,241 @@ chmod +x relay/start.sh
 ./relay/start.sh
 ```
 
-สคริปต์จะ:
-- รัน MediaMTX รับ RTMP ที่ port 1935
-- เปิด ngrok tunnel สำหรับ RTMP (TCP) และ HLS (HTTP)
-- ดึง public URL จาก ngrok API แสดงผลทันที
-
-ตัวอย่าง output:
+รอจน output แสดง endpoint เช่น:
 ```
- ================================================
+================================================
   STREAM ENDPOINTS
- ================================================
+================================================
 
   [tcp]   tcp://0.tcp.ngrok.io:12345   ->  localhost:1935
-  [http]  http://abc123.ngrok.io       ->  localhost:8888
+  [http]  https://abc123.ngrok.io      ->  localhost:8888
 ```
 
-> **ngrok free plan:** รัน 2 tunnel พร้อมกันได้ แต่ต้องอยู่ใน
-> session เดียวกัน ถ้าพบ error "session limit" ให้ดู
-> [วิธีตั้งค่า ngrok config](#ngrok-config-หลาย-tunnel) ด้านล่าง
+> ดู URL ได้ตลอดเวลาที่ http://127.0.0.1:4040 (ngrok dashboard local)
 
-### ขั้นตอนที่ 3 — ตั้งค่า Insta360 app
+### ขั้นตอนที่ 2 — ตั้งค่า Insta360 app
 
-1. เชื่อม Wi-Fi เดียวกับเครื่องที่รัน relay (หรือใช้ ngrok URL)
-2. เปิดแอป **Insta360** → เลือกกล้อง X5
-3. ไปที่ **Live** → **Custom RTMP**
-4. ใส่ RTMP URL:
+1. เปิดแอป **Insta360** บนมือถือ → เลือกกล้อง X5
+2. ไปที่ **Live** → **Custom RTMP**
+3. กรอก RTMP URL (ใช้ TCP URL จาก ngrok):
    ```
    rtmp://0.tcp.ngrok.io:12345/live/x5
    ```
-   (แทน `0.tcp.ngrok.io:12345` ด้วย TCP URL ที่ ngrok ให้มา)
-5. กด **Start Live**
+   > แทน `0.tcp.ngrok.io:12345` ด้วย URL จริงที่ปรากฏใน terminal
+4. กด **Start Live**
+5. กล้องจะส่งสัญญาณเข้า MediaMTX → ไฟ Live ติด
 
-### ขั้นตอนที่ 4 — เปิดดูใน CN360Live
+### ขั้นตอนที่ 3 — ตรวจสอบว่า stream ขึ้น
 
-เปิด https://cn360-360vr-live.vercel.app → กด **LIVE CAM** → ใส่ URL:
-
-**HLS (latency ~3–5 วินาที — เสถียรกว่า, รองรับทุก browser):**
+เปิด browser บนเครื่องเดียวกับที่รัน relay:
 ```
-http://abc123.ngrok.io/live/x5/index.m3u8
+http://localhost:8888/live/x5
+```
+ถ้าเห็น HLS player หรือ playlist ขึ้น — stream พร้อมแล้ว
+
+---
+
+## เปิดดูใน Browser / VR
+
+### ทาง CN360Live (Vercel)
+
+1. เปิด https://cn360-360vr-live.vercel.app
+2. กด **PC MODE** หรือ **VR MODE**
+3. ระบบโหลดรายการกล้องจาก relay อัตโนมัติ
+   - ถ้ายังไม่ได้ตั้ง relay URL จะเห็นสถานะ WAITING (mock mode)
+   - ดูวิธีตั้ง relay URL ที่ [หัวข้อถัดไป](#ตั้งค่า-relay-url-ใน-cn360live)
+
+### ทดสอบ local (ไม่ต้องใช้ Vercel)
+
+```bash
+# Node.js
+npx serve public
+
+# Python
+cd public && python -m http.server 3000
+```
+เปิด http://localhost:3000
+
+### บน Pico 4
+
+1. เปิด Pico browser → เปิด CN360Live (ต้องเป็น HTTPS)
+2. กด **VR MODE** → เข้า 3D Lobby
+3. เลือกกล้อง → กด **ENTER XR**
+4. headset เข้าสู่ immersive-vr mode พร้อม head tracking
+
+> WebXR ต้องการ secure context (HTTPS) — ถ้าทดสอบ local ต้องใช้ localhost
+> หรือ ngrok HTTPS tunnel
+
+---
+
+## ตั้งค่า Relay URL ใน CN360Live
+
+CN360Live ต้องรู้ URL ของ relay เพื่อดึงสถานะกล้องและ stream
+
+### วิธี 1 — Query Parameter (แนะนำสำหรับใช้งานจริง)
+
+ใส่ URL ต่อท้าย link:
+```
+https://cn360-360vr-live.vercel.app/?relay=https://abc123.ngrok.io
 ```
 
-**WebRTC (latency ~1 วินาที — ต้องการ HTTPS, browser บางตัวอาจ block mixed content):**
+แทน `https://abc123.ngrok.io` ด้วย ngrok HTTP URL ของคุณ (URL จาก HLS tunnel ที่ชี้ port 8888)
+
+### วิธี 2 — แก้ไฟล์ config.js (สำหรับ deploy ส่วนตัว)
+
+เปิดไฟล์ `public/config.js`:
+```js
+export const RELAY_BASE = (
+  _relayParam
+    ? _relayParam.replace(/\/$/, '')
+    : 'https://abc123.ngrok.io'   // ← ใส่ URL ตรงนี้
+);
 ```
-http://abc123.ngrok.io/live/x5
+
+แล้ว commit + push → Vercel auto-deploy
+
+> **หมายเหตุ:** ngrok free plan สร้าง URL ใหม่ทุกครั้งที่ restart — ต้องอัปเดต
+> URL ทั้งใน Insta360 app (RTMP) และใน CN360Live (?relay=) ด้วยทุกครั้ง
+> ใช้ **ngrok static domain** (free 1 domain) เพื่อแก้ปัญหานี้
+
+### วิธี 3 — Developer Mode
+
+เปิด `?debug=1` → กด DEVELOPER MODE → ใส่ relay URL → กด SET RELAY
+
+---
+
+## การ Deploy Vercel
+
+### ครั้งแรก
+
+1. ไปที่ https://vercel.com → เชื่อม GitHub repo `saifadecha07/360live-VR-CN360`
+2. ตั้งค่า Project:
+   - **Framework Preset:** Other
+   - **Output Directory:** `public`
+   - **Build Command:** *(ว่าง)*
+   - **Install Command:** *(ว่าง)*
+3. กด Deploy
+
+### Deploy ครั้งต่อไป
+
+รัน `deploy.bat` หรือ:
+```bat
+git add .
+git commit -m "your message"
+git push origin main
+```
+Vercel จะ auto-deploy ทุกครั้งที่ push ไป `main`
+
+---
+
+## Project Structure
+
+```
+360Live/
+│
+├── public/                     ← Static files (Vercel serves this folder)
+│   ├── index.html              ← HTML shell — 4 screens: Home, PC, VR, Dev
+│   ├── app.js                  ← SPA entry point & state machine
+│   ├── config.js               ← Central config: relay URL, camera registry
+│   ├── cameras-api.js          ← Client-side fetch + auto-polling
+│   ├── panorama.js             ← Three.js 360° sphere renderer (reusable class)
+│   ├── pc-mode.js              ← PC Mode: camera list + viewer controller
+│   ├── vr-lobby.js             ← VR Mode: Three.js 3D camera lobby scene
+│   ├── vr-viewer.js            ← VR Mode: 360° viewer + WebXR session
+│   ├── viewer.js               ← Legacy shim (re-exports panorama.js)
+│   └── style.css               ← Design system: glassmorphism, neon blue
+│
+├── api/                        ← Vercel serverless functions
+│   ├── cameras.js              ← GET /api/cameras — multi-camera status
+│   └── camera-status.js        ← GET /api/camera-status — legacy single-camera
+│
+├── relay/                      ← รัน local (ไม่ deploy ขึ้น Vercel)
+│   ├── mediamtx.yml            ← MediaMTX config (RTMP/HLS/WebRTC/API)
+│   ├── mediamtx.exe            ← MediaMTX binary (Windows)
+│   ├── ngrok.exe               ← ngrok binary (Windows)
+│   ├── ffmpeg.exe              ← FFmpeg binary
+│   ├── start.bat               ← Windows launcher (MediaMTX + ngrok)
+│   └── start.sh                ← Mac/Linux launcher
+│
+├── deploy.bat                  ← Git push helper
+└── README.md
 ```
 
-กด **CONNECT**
+---
 
-> **latency:**
-> - HLS แบ่งเป็น segment ~1s → delay รวม 3–5s
-> - WebRTC ส่ง UDP โดยตรง → delay ~1s แต่ต้องการ HTTPS ถ้าหน้าเว็บโหลดจาก HTTPS
+## API Reference
 
-### ข้อควรรู้
+### `GET /api/cameras`
 
-| ข้อจำกัด | รายละเอียด |
+ตรวจสอบสถานะกล้องทั้งหมดจาก MediaMTX
+
+**Query params:**
+
+| Param | Required | ตัวอย่าง | ความหมาย |
+|---|---|---|---|
+| `relay` | ไม่บังคับ | `https://abc123.ngrok.io` | ngrok HLS tunnel URL (port 8888) |
+| `api` | ไม่บังคับ | `https://xyz.ngrok.io` | ngrok API tunnel URL (port 9997) — ถ้าไม่ส่ง ระบบ derive จาก relay |
+
+**ตัวอย่าง:**
+```
+GET /api/cameras
+GET /api/cameras?relay=https://abc123.ngrok.io
+```
+
+**Response:**
+```json
+{
+  "source": "mock | relay",
+  "relayReachable": true,
+  "cameras": [
+    {
+      "id": "x5-01",
+      "name": "Camera 01",
+      "model": "Insta360 X5",
+      "path": "live/x5",
+      "type": "360",
+      "status": "streaming | waiting | unreachable",
+      "streams": {
+        "hls":    "https://abc123.ngrok.io/live/x5/index.m3u8",
+        "webrtc": "https://abc123.ngrok.io/live/x5"
+      }
+    }
+  ]
+}
+```
+
+**Status values:**
+
+| status | ความหมาย |
 |---|---|
-| URL เปลี่ยนทุกครั้ง | ngrok free plan สร้าง URL ใหม่ทุกครั้งที่ restart — ต้องอัปเดตใน Insta360 app และ CN360Live ด้วย |
-| เครื่องต้องเปิดค้าง | MediaMTX และ ngrok ต้องรันตลอดช่วงที่สตรีม |
-| latency เพิ่มขึ้น | RTMP → ngrok → MediaMTX → HLS → ngrok → browser มี hop หลายชั้น |
-| ngrok free = 1 agent | รัน 2 tunnel ได้ใน 1 session ผ่าน config file |
+| `streaming` | กล้องกำลัง live อยู่ |
+| `waiting` | relay พร้อมแต่ยังไม่มีสัญญาณจากกล้อง |
+| `unreachable` | ติดต่อ relay ไม่ได้ (เครื่องปิด หรือ ngrok URL เปลี่ยน) |
+| `mock` | ไม่มี relay URL — คืนข้อมูลจำลอง |
 
-### ngrok config หลาย tunnel
+---
 
-สร้างไฟล์ `~/.config/ngrok/ngrok.yml` (หรือ `%USERPROFILE%\.ngrok2\ngrok.yml` บน Windows):
+### `GET /api/camera-status` (Legacy)
 
+API เดิมสำหรับ single camera ยังใช้งานได้:
+```
+GET /api/camera-status
+GET /api/camera-status?relay=https://abc123.ngrok.io
+```
+
+---
+
+## ngrok config หลาย tunnel
+
+ngrok free plan รัน 2 tunnel พร้อมกันได้ใน 1 agent session
+ต้องใช้ config file แทนการรัน command line แยกกัน
+
+**สร้างไฟล์ `relay/ngrok.yml`:**
 ```yaml
-version: "2"
-authtoken: YOUR_AUTHTOKEN
+version: "3"
+agent:
+  authtoken: YOUR_AUTHTOKEN_HERE
+
 tunnels:
   rtmp:
     proto: tcp
@@ -166,144 +422,54 @@ tunnels:
     addr: 8888
 ```
 
-แล้วรัน:
-```bash
-ngrok start rtmp hls
-```
-
----
-
-## Viewport API — request an angle, get a 2D image back
-
-นอกจาก client-side 360° viewer (`viewer.js`) แล้ว ยังมี **Viewport API** —
-server ท้องถิ่นตัวเล็ก ๆ ที่รับพารามิเตอร์มุม (`yaw` / `pitch` / `fov`)
-พร้อม option ดึงแบบ `360` (rectilinear crop ปกติ) หรือ `180`
-(fisheye hemisphere) แล้วส่งภาพ JPEG กลับมาให้ทันที — เหมาะสำหรับทดสอบผ่าน
-web request/curl/browser โดยตรง หรือต่อยอดไปยังอุปกรณ์ที่ไม่มี 3D engine
-
-```
-Insta360 X5 ──RTMP──▶ MediaMTX ──RTSP :8554──▶ ffmpeg (v360 filter) ──▶ JPEG
-                                                       ▲
-                                          GET /api/view?yaw=&pitch=&fov=&mode=
-```
-
-ใช้แค่ Python 3 (standard library) + `relay/ffmpeg.exe` ที่มีอยู่แล้ว
-ไม่ต้องติดตั้งอะไรเพิ่ม
-
-### รัน
-
-`relay/start.bat` (หรือ `start.sh`) รัน Viewport API ให้อัตโนมัติเป็นขั้นที่ 3
-อยู่แล้ว (ถ้ามี `python` ใน PATH) หรือรันแยกเองก็ได้:
-
+**แก้ `relay/start.bat`** ให้ใช้ config file:
 ```bat
-relay\view_start.bat
-```
-```bash
-./relay/view_start.sh
+:: แทนบรรทัด ngrok tcp 1935 และ ngrok http 8888
+start "ngrok" /min ngrok start --config "%~dp0ngrok.yml" rtmp hls
 ```
 
-Default listen ที่ `http://localhost:8095`
-
-### ใช้งาน
-
-```
-GET /api/view?yaw=<-180..180>&pitch=<-90..90>&fov=<30..120>&mode=360|180&path=live/x5
-```
-
-| Param | ค่าเริ่มต้น | ความหมาย |
-|---|---|---|
-| `yaw` | `0` | มุมหมุนแนวนอน (องศา) |
-| `pitch` | `0` | มุมเงย/ก้ม (องศา) |
-| `fov` | `90` | มุมมอง — ใช้เฉพาะ `mode=360` |
-| `mode` | `360` | `360` = ตัดภาพ rectilinear ปกติ, `180` = fisheye ครึ่งทรงกลม 180° รอบจุด yaw/pitch |
-| `path` | `live/x5` | ชื่อ path ของสตรีมใน MediaMTX |
-
-ตัวอย่าง:
-```
-http://localhost:8095/api/view?yaw=90&pitch=0&fov=90&mode=360
-http://localhost:8095/api/view?yaw=180&pitch=-10&mode=180
-```
-
-เช็คว่า relay พร้อมไหม (ไม่ต้อง spawn ffmpeg):
-```
-GET /api/view/status   →  {"relay": "up" | "down"}
-```
-
-> **latency:** ffmpeg ต้องรอ keyframe (IDR) แรกที่มาถึงก่อนถึงจะ crop ภาพได้
-> ยิ่ง keyframe interval ของสตรีมสั้น (ปกติ live stream ~1-2s) ยิ่งตอบเร็ว
-> ถ้าตอบช้าผิดปกติ (>5s) ให้เช็ค encoder settings ฝั่งกล้อง
-
-### ทดลองผ่านหน้าเว็บ
-
-เปิด [`public/view-test.html`](public/view-test.html) — มี slider ปรับ
-yaw/pitch/fov, toggle 360/180, ปุ่ม fetch และแสดง URL ที่ยิงจริงให้คัดลอกไปใช้
-กับ curl ได้ด้วย
+> **ngrok static domain (free):** ลงทะเบียน 1 static domain ได้ฟรีที่
+> https://dashboard.ngrok.com/domains — URL จะไม่เปลี่ยนแม้ restart
 
 ---
 
-## เชื่อมแว่น VR (Pico 4) เข้ากับสตรีมจริง
+## ข้อจำกัดและ FAQ
 
-ส่วนนี้ทำงานอยู่แล้วใน `viewer.js`/`index.html` ไม่ต้องแก้โค้ดเพิ่ม —
-แค่ต่อ hardware ตามขั้นตอน relay ด้านบน แล้ว:
+**Q: URL เปลี่ยนทุกครั้งที่รีสตาร์ท relay**  
+A: เป็นพฤติกรรมของ ngrok free plan — ต้องอัปเดต URL ใน Insta360 app และ `?relay=` ทุกครั้ง ใช้ ngrok static domain (ฟรี 1 domain) เพื่อแก้ปัญหา
 
-1. เปิด CN360Live บน browser ของ Pico 4 (ต้องเป็น HTTPS หรือ localhost —
-   WebXR ต้องการ secure context)
-2. กด **LIVE CAM** → tab **HLS Stream** → ใส่ HLS URL ของสตรีม Insta360 X5
-   (ngrok URL หรือ URL ในเครือข่ายเดียวกัน) → **CONNECT**
-3. กด **ENTER VR** — Pico 4 จะเข้าสู่โหมด immersive-vr พร้อม head tracking
-   บนสตรีมสด
+**Q: stream ไม่ขึ้นบน Chrome / Firefox (ขึ้นได้เฉพาะ Safari)**  
+A: Chrome/Firefox ไม่รองรับ HLS native — ต้องใช้ HLS.js (อยู่ใน Roadmap) ทางเลือกชั่วคราว: ใช้ WebRTC URL แทน HLS
 
-> ถ้าโหลดวิดีโอไม่ขึ้นบน Pico 4 ทั้งที่ต่อ HLS URL ถูกแล้ว มักเป็นเพราะ
-> mixed content (หน้าเว็บ HTTPS แต่สตรีม HTTP) — ลองใช้ `relay/cloudflared.exe`
-> เปิด HTTPS tunnel ให้ MediaMTX แทน ngrok plain HTTP
+**Q: Pico 4 โหลด stream ไม่ขึ้น ทั้งที่ URL ถูก**  
+A: mixed content — หน้าเว็บโหลดจาก HTTPS แต่ stream เป็น HTTP ngrok ให้ HTTPS URL อัตโนมัติ ใช้ URL ที่ขึ้นต้น `https://`
 
----
+**Q: Vercel function เช็ค relay ไม่ได้**  
+A: Vercel รันบน cloud ไม่สามารถเข้าถึง `localhost:9997` ได้โดยตรง ต้องเปิด ngrok tunnel สำหรับ port 9997 ด้วย หรือส่ง `?api=<ngrok-api-url>` แยก
 
-## Camera Status API
+**Q: กล้องแสดง WAITING ตลอด ทั้งที่กดสตรีมแล้ว**  
+A: ตรวจสอบ RTMP URL ใน Insta360 app — ต้องใช้รูปแบบ `rtmp://HOST:PORT/live/x5` และ PORT ต้องตรงกับที่ ngrok TCP กำหนดให้
 
-```
-GET /api/camera-status
-GET /api/camera-status?relay=http://abc123.ngrok.io
-```
-
-- ไม่ส่ง `relay` → คืน mock status
-- ส่ง `relay` → เช็ค MediaMTX `/v3/paths/list` จริง
-- ถ้า relay ไม่ตอบ (เครื่องปิด / ngrok URL เปลี่ยน) → คืน `"status": "unreachable"`
-
-> **หมายเหตุ:** Vercel function อยู่บน cloud ของ Vercel  
-> relay อยู่บนเครื่อง local → เช็คได้ก็ต่อเมื่อ ngrok expose port 9997  
-> หรือ relay มี public URL เท่านั้น
+**Q: latency สูงมาก**  
+A: HLS มี latency ~3–5 วินาที เป็นเรื่องปกติ ถ้าต้องการ latency ต่ำกว่าให้ใช้ WebRTC URL (`/live/x5` แทน `/live/x5/index.m3u8`)
 
 ---
 
-## Project Structure
+## Roadmap
 
-```
-360Live/
-├── public/
-│   ├── index.html        ← UI หลัก
-│   ├── viewer.js         ← Three.js sphere + WebXR
-│   ├── style.css         ← Dark cinematic UI
-│   └── view-test.html    ← Viewport API test page (yaw/pitch/fov -> image)
-├── api/
-│   └── camera-status.js  ← Vercel serverless (mock + optional relay check)
-├── relay/
-│   ├── mediamtx.yml      ← MediaMTX config
-│   ├── start.bat         ← Windows launcher (MediaMTX + ngrok + Viewport API)
-│   ├── start.sh          ← Mac/Linux launcher
-│   ├── view_server.py    ← Viewport API (yaw/pitch/fov -> JPEG via ffmpeg v360)
-│   ├── view_start.bat    ← Viewport API launcher (standalone, Windows)
-│   └── view_start.sh     ← Viewport API launcher (standalone, Mac/Linux)
-├── deploy.bat            ← Git push helper
-└── README.md
-```
+### Phase 2 (ถัดไป)
+- [ ] **ngrok static domain** — URL ไม่เปลี่ยนเมื่อ restart
+- [ ] **HLS.js** — รองรับ Chrome/Firefox/Edge (ปัจจุบัน HLS ใช้ได้เฉพาะ Safari/Pico)
+- [ ] **RTMPS** (port 1936) — RTMP over TLS ปลอดภัยกว่า
+- [ ] **Auth บน MediaMTX** — `publishUser` / `publishPass` ใน `mediamtx.yml`
+- [ ] **WebRTC controller raycast** — กด panel ใน VR ด้วย controller บน Pico 4
+- [ ] **Multi-camera** — เพิ่มกล้องหลายตัวใน `CAMERA_REGISTRY` ใน `config.js`
+
+### Phase 3 (อนาคต)
+- [ ] VPS relay (ไม่ต้องเปิดเครื่องค้าง)
+- [ ] Recording ผ่าน MediaMTX
+- [ ] Spatial audio
 
 ---
 
-## Phase 2 Checklist
-
-- [ ] ngrok static domain (free 1 domain) เพื่อให้ URL ไม่เปลี่ยน
-- [ ] publishUser/publishPass ใน mediamtx.yml
-- [ ] HLS.js สำหรับ browser ที่ไม่ support native HLS
-- [ ] UI แสดงสถานะ relay อัตโนมัติผ่าน `/api/camera-status?relay=...`
-- [ ] RTMPS (port 1936) แทน RTMP plain
+*Content was rephrased for clarity and project-specific context.*
