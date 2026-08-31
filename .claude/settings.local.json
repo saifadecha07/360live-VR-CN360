@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd //c \"echo Deploy update | .\\\\deploy.bat\")"
+    ]
+  }
+}

@@ -97,6 +97,29 @@
           </div>
         </button>
 
+        <!-- SERVER LIVE MODE -->
+        <button class="mode-card mode-card--server" id="btn-server-mode" aria-label="Server Live — Local preview with shareable link">
+          <div class="mode-card-icon" aria-hidden="true">
+            <!-- Bold broadcast / signal tower icon -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
+          <div class="mode-card-body">
+            <div class="mode-card-title">Server Live</div>
+            <div class="mode-card-desc">Local preview · USB camera<br>Share stream link</div>
+          </div>
+          <div class="mode-card-arrow" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </div>
+        </button>
+
         <!-- VR MODE -->
         <button class="mode-card mode-card--vr" id="btn-vr-mode" aria-label="VR Mode — Enter 3D Camera Lobby">
           <div class="mode-card-badge" id="vr-badge">WebXR</div>
@@ -328,6 +351,78 @@
         </div>
 
         <div id="dev-status" class="dev-status" aria-live="polite">Status: idle</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SCREEN 5 — SERVER LIVE MODE
+  ════════════════════════════════════════════════════ -->
+  <div id="screen-server" class="screen">
+
+    <!-- Back button -->
+    <button class="nav-back" id="srv-back-btn" aria-label="Back to Home">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Home
+    </button>
+
+    <!-- 360° preview canvas -->
+    <canvas id="srv-canvas" class="viewer-canvas" aria-label="Server live 360° preview"></canvas>
+
+    <!-- Top HUD — status bar -->
+    <div class="srv-hud-top">
+      <div class="srv-status-pill">
+        <div id="srv-status-dot" class="status-dot status-dot--waiting" aria-hidden="true"></div>
+        <span id="srv-status-text">Connecting</span>
+      </div>
+
+      <div class="srv-meta">
+        <span class="srv-meta-item">
+          <span class="srv-meta-label">Path</span>
+          <span id="srv-path" class="srv-meta-value">live/x5</span>
+        </span>
+        <span class="srv-meta-item">
+          <span class="srv-meta-label">Uptime</span>
+          <span id="srv-uptime" class="srv-meta-value">—</span>
+        </span>
+        <span class="srv-meta-item">
+          <span class="srv-meta-label">Bitrate</span>
+          <span id="srv-bitrate" class="srv-meta-value">—</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Bottom panel — share URL -->
+    <div id="srv-share-url" class="srv-share-panel hidden">
+      <div class="srv-share-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        Share Stream
+      </div>
+      <div class="srv-share-row">
+        <input id="srv-share-input" type="url" class="srv-share-input" readonly
+               aria-label="Shareable stream URL" />
+        <button id="srv-copy-btn" class="srv-copy-btn" aria-label="Copy URL">Copy</button>
+      </div>
+      <p class="srv-share-hint">Anyone with this link can watch the live stream</p>
+    </div>
+
+    <!-- Overlay: connecting / waiting / error -->
+    <div id="srv-overlay" class="viewer-overlay" role="status" aria-live="polite">
+      <div class="viewer-overlay-box">
+        <div id="srv-overlay-icon" class="overlay-icon" aria-hidden="true">
+          <div class="spinner"></div>
+        </div>
+        <div id="srv-overlay-title" class="overlay-title">Connecting to local stream</div>
+        <div id="srv-overlay-msg"   class="overlay-msg"></div>
+        <button id="srv-retry-btn"  class="overlay-retry hidden">Retry</button>
       </div>
     </div>
 

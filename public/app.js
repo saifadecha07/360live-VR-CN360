@@ -12,10 +12,11 @@
  *   ?debug=1      Enable developer mode
  */
 
-import { PCMode }    from './pc-mode.js';
-import { VRLobby }   from './vr-lobby.js';
-import { VRViewer }  from './vr-viewer.js';
-import { Panorama }  from './panorama.js';
+import { PCMode }      from './pc-mode.js';
+import { VRLobby }     from './vr-lobby.js';
+import { VRViewer }    from './vr-viewer.js';
+import { Panorama }    from './panorama.js';
+import { ServerMode }  from './server-mode.js';
 import {
   RELAY_BASE,
   DEBUG_MODE,
@@ -28,28 +29,31 @@ import { fetchCameras, startPolling } from './cameras-api.js';
 // ─────────────────────────────────────────────────────────
 
 const STATES = Object.freeze({
-  HOME:       'HOME',
-  PC_MODE:    'PC_MODE',
-  VR_LOBBY:   'VR_LOBBY',
-  VR_VIEWER:  'VR_VIEWER',
-  DEV_MODE:   'DEV_MODE',
+  HOME:        'HOME',
+  PC_MODE:     'PC_MODE',
+  VR_LOBBY:    'VR_LOBBY',
+  VR_VIEWER:   'VR_VIEWER',
+  SERVER_MODE: 'SERVER_MODE',
+  DEV_MODE:    'DEV_MODE',
 });
 
 let _state = STATES.HOME;
 
 // Controllers (lazy-init on first use)
-let _pcMode   = null;
-let _vrLobby  = null;
-let _vrViewer = null;
-let _devPano  = null;
+let _pcMode     = null;
+let _vrLobby    = null;
+let _vrViewer   = null;
+let _serverMode = null;
+let _devPano    = null;
 let _stopLobbyPoll = null;
 
 // Screen elements
 const screens = {
-  home: document.getElementById('screen-home'),
-  pc:   document.getElementById('screen-pc'),
-  vr:   document.getElementById('screen-vr'),
-  dev:  document.getElementById('screen-dev'),
+  home:   document.getElementById('screen-home'),
+  pc:     document.getElementById('screen-pc'),
+  vr:     document.getElementById('screen-vr'),
+  server: document.getElementById('screen-server'),
+  dev:    document.getElementById('screen-dev'),
 };
 
 // ─────────────────────────────────────────────────────────
@@ -68,9 +72,10 @@ function showScreen(name) {
 
 function goHome() {
   // Tear down any active mode
-  if (_pcMode)   { _pcMode.leave(); }
-  if (_vrLobby)  { _vrLobby.destroy(); _vrLobby = null; }
-  if (_vrViewer) { _vrViewer.unload(); _vrViewer = null; }
+  if (_pcMode)     { _pcMode.leave(); }
+  if (_vrLobby)    { _vrLobby.destroy(); _vrLobby = null; }
+  if (_vrViewer)   { _vrViewer.unload(); _vrViewer = null; }
+  if (_serverMode) { _serverMode.leave(); }
   if (_stopLobbyPoll) { _stopLobbyPoll(); _stopLobbyPoll = null; }
 
   _state = STATES.HOME;
@@ -90,6 +95,20 @@ function goPCMode() {
     });
   }
   _pcMode.enter();
+}
+
+function goServerMode() {
+  _state = STATES.SERVER_MODE;
+  showScreen('server');
+
+  // Lazy-init — reuse instance across home↔server transitions
+  if (!_serverMode) {
+    _serverMode = new ServerMode({
+      onBack: goHome,
+      toast:  showToast,
+    });
+  }
+  _serverMode.enter();
 }
 
 function goVRLobby() {
@@ -358,6 +377,7 @@ function initDevMode() {
 function init() {
   // Wire home buttons
   document.getElementById('btn-pc-mode').addEventListener('click', goPCMode);
+  document.getElementById('btn-server-mode').addEventListener('click', goServerMode);
   document.getElementById('btn-vr-mode').addEventListener('click', goVRLobby);
   document.getElementById('vr-home-btn').addEventListener('click', goHome);
 
