@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -L -o /dev/null -w \"%{http_code} %{url_effective}\\\\n\" https://0cff13bc957b6f.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -s \"https://cn360-360vr-live.vercel.app/api/cameras?relay=https://0cff13bc957b6f.lhr.life&api=https://ab567b9fcc4c2f.lhr.life\")",
+      "Bash(./ffmpeg.exe -list_devices true -f dshow -i dummy)",
+      "Bash(./ffmpeg.exe -f dshow -list_options true -i video=\"Insta360 X5\")",
+      "Bash(taskkill //F //IM ffmpeg.exe)",
+      "Bash(curl -s http://127.0.0.1:9997/v3/paths/list)",
+      "Bash(curl -s -L -o /dev/null -w \"%{http_code}\\\\n\" https://0cff13bc957b6f.lhr.life/live/x5/index.m3u8)",
+      "PowerShell(Get-Process ssh -ErrorAction SilentlyContinue)",
+      "Bash(curl -s -L -o /dev/null -w \"%{http_code}\\\\n\" https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -s https://36258fb238252e.lhr.life/v3/paths/list)",
+      "Bash(curl -s \"https://cn360-360vr-live.vercel.app/api/cameras?relay=https://bd479e26924a02.lhr.life&api=https://36258fb238252e.lhr.life\")",
+      "Bash(cmd //c \"echo fix: vr-lobby resize before camera init | .\\\\deploy.bat\")"
+    ]
+  }
+}

@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cmd //c \"echo Deploy update | .\\\\deploy.bat\")"
+      "Bash(cmd //c \"echo Deploy update | .\\\\deploy.bat\")",
+      "Bash(where mediamtx *)",
+      "Bash(where ngrok *)",
+      "Bash(curl -s http://localhost:9997/v3/paths/list)",
+      "PowerShell(Get-Process ngrok -ErrorAction SilentlyContinue)",
+      "Bash(./ffmpeg.exe -list_devices true -f dshow -i dummy)",
+      "Bash(./ffmpeg.exe -f dshow -list_options true -i video=\"ACER FHD User Facing\")",
+      "Bash(./cloudflared.exe --version)",
+      "Bash(curl -s http://127.0.0.1:9997/v3/paths/list)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://sys-dawn-nickel-governing.trycloudflare.com/live/x5/index.m3u8)",
+      "Bash(curl -s https://them-pee-taxes-fabric.trycloudflare.com/v3/paths/list)"
     ]
   }
 }

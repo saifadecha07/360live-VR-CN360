@@ -50,6 +50,7 @@ export class VRLobby {
 
     this._setupRenderer();
     this._setupScene();
+    this._resize();
     this._buildEnvironment();
     this._bindEvents();
     this._startLoop();
@@ -84,7 +85,6 @@ export class VRLobby {
     this._renderer.toneMapping      = THREE.ACESFilmicToneMapping;
     this._renderer.toneMappingExposure = 0.85;
     this._renderer.xr.enabled = true;
-    this._resize();
   }
 
   _setupScene() {
