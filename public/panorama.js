@@ -31,6 +31,7 @@ export class Panorama {
     this._state = { yaw: 0, pitch: 0, fov: 90, isVR: false, source: 'none' };
     this._drag  = { active: false, x: 0, y: 0 };
     this._video = null;
+    this._hls   = null;
     this._xrSession = null;
 
     const seg = opts.segments ?? SPHERE_SEGMENTS.viewer;
@@ -142,10 +143,9 @@ export class Panorama {
     video.muted       = true;
     video.playsInline = true;
     video.autoplay    = true;
-    video.src         = url;
     this._video = video;
 
-    video.addEventListener('canplay', () => {
+    const onReady = () => {
       const tex = new THREE.VideoTexture(video);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.minFilter  = THREE.LinearFilter;
@@ -157,15 +157,35 @@ export class Panorama {
       this._emitStatus('LIVE', 'live');
       this._emitToast('Live stream connected');
       this.opts.onStreamConnected?.();
-    }, { once: true });
+    };
 
-    video.addEventListener('error', () => {
+    const onFail = () => {
       const msg = 'Stream connection failed';
       this._emitToast(msg);
       this._emitStatus('360', 'ready');
       this.opts.onStreamError?.(msg);
       this._buildDefaultTexture();
-    }, { once: true });
+    };
+
+    const isM3u8       = /\.m3u8($|\?)/i.test(url);
+    const hasNativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
+
+    // Chrome/Edge/most Android browsers can't play .m3u8 via native <video>.
+    // Safari (and Pico's browser on some builds) can — prefer that path when available.
+    if (isM3u8 && !hasNativeHls && window.Hls && window.Hls.isSupported()) {
+      const hls = new window.Hls({ enableWorker: true });
+      this._hls = hls;
+      hls.on(window.Hls.Events.MANIFEST_PARSED, onReady);
+      hls.on(window.Hls.Events.ERROR, (_evt, data) => {
+        if (data.fatal) onFail();
+      });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+    } else {
+      video.src = url;
+      video.addEventListener('canplay', onReady, { once: true });
+      video.addEventListener('error',   onFail,  { once: true });
+    }
   }
 
   /** Reset back to default panorama, stop any video */
@@ -295,6 +315,10 @@ export class Panorama {
     if (this.mat.map) {
       this.mat.map.dispose();
       this.mat.map = null;
+    }
+    if (this._hls) {
+      this._hls.destroy();
+      this._hls = null;
     }
     if (this._video) {
       this._video.pause();

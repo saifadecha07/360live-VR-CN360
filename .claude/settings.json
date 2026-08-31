@@ -17,7 +17,11 @@
       "Bash(curl -sI https://0cff13bc957b6f.lhr.life/live/x5/index.m3u8)",
       "Bash(curl -sI https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -L https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
-      "Bash(cmd //c \"echo chore: update claude permission allowlist | .\\\\deploy.bat\")"
+      "Bash(cmd //c \"echo chore: update claude permission allowlist | .\\\\deploy.bat\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://36258fb238252e.lhr.life/v3/paths/list)",
+      "Bash(curl -s https://cn360-360vr-live.vercel.app/config.js)",
+      "Bash(cmd //c \"echo fix: reintroduce hls.js fallback lost in refactor, HLS was broken on Chrome/Edge | .\\\\deploy.bat\")"
     ]
   }
 }
