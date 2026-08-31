@@ -13,7 +13,11 @@
       "Bash(curl -s https://36258fb238252e.lhr.life/v3/paths/list)",
       "Bash(curl -s \"https://cn360-360vr-live.vercel.app/api/cameras?relay=https://bd479e26924a02.lhr.life&api=https://36258fb238252e.lhr.life\")",
       "Bash(cmd //c \"echo fix: vr-lobby resize before camera init | .\\\\deploy.bat\")",
-      "Bash(cmd //c \"echo feat: auto-load default relay+api so PC/VR mode show live without query params | .\\\\deploy.bat\")"
+      "Bash(cmd //c \"echo feat: auto-load default relay+api so PC/VR mode show live without query params | .\\\\deploy.bat\")",
+      "Bash(curl -sI https://0cff13bc957b6f.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -sI https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -L https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
+      "Bash(cmd //c \"echo chore: update claude permission allowlist | .\\\\deploy.bat\")"
     ]
   }
 }
