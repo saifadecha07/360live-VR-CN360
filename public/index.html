@@ -5,53 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#050A12" />
-  <title>CN360Live · VR Camera System</title>
+  <title>CN360Live · Spatial Camera System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════════════
-       SCREEN 1 — HOME / MODE SELECTION
-  ════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════
+       SCREEN 1 — HOME
+  ════════════════════════════════════════════════════ -->
   <div id="screen-home" class="screen active">
+
+    <!-- Background layers -->
     <div class="home-bg">
       <div class="home-grid"></div>
-      <div class="home-glow"></div>
+      <!-- Faint camera silhouettes for spatial feel -->
+      <div class="home-bg-cams" aria-hidden="true">
+        <div class="home-bg-cam">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          </svg>
+        </div>
+        <div class="home-bg-cam">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M2 8h20v10a2 2 0 01-2 2H4a2 2 0 01-2-2V8z"/>
+            <circle cx="8.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
+            <circle cx="15.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="home-bg-cam">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <div class="home-bg-cam">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
+          </svg>
+        </div>
+      </div>
     </div>
 
+    <!-- Main content -->
     <div class="home-content">
+
+      <!-- Header / Logo -->
       <header class="home-header">
         <div class="home-logo">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00C6FF" stroke-width="1.5">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="12" r="4"/>
-            <line x1="12" y1="2"  x2="12" y2="6"/>
-            <line x1="12" y1="18" x2="12" y2="22"/>
-            <line x1="2"  y1="12" x2="6"  y2="12"/>
-            <line x1="18" y1="12" x2="22" y2="12"/>
-          </svg>
+          <div class="home-logo-icon" aria-hidden="true">
+            <!-- Bold camera icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+          </div>
           <span class="home-logo-text">CN360<span class="home-logo-accent">Live</span></span>
         </div>
-        <p class="home-subtitle">LIVE 360° CAMERA SYSTEM</p>
+        <div class="home-tagline">
+          <p class="home-title">Spatial Camera Platform</p>
+          <p class="home-subtitle-text">Live 360° · Insta360 X5 · WebXR</p>
+        </div>
       </header>
 
-      <div class="mode-cards">
+      <!-- Mode selection -->
+      <nav class="mode-cards" aria-label="Select mode">
 
         <!-- PC MODE -->
-        <button class="mode-card" id="btn-pc-mode">
-          <div class="mode-card-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+        <button class="mode-card" id="btn-pc-mode" aria-label="PC Mode — Watch Live 360° on Browser">
+          <div class="mode-card-icon" aria-hidden="true">
+            <!-- Bold monitor icon -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="3" width="20" height="14" rx="2"/>
               <line x1="8" y1="21" x2="16" y2="21"/>
               <line x1="12" y1="17" x2="12" y2="21"/>
             </svg>
           </div>
           <div class="mode-card-body">
-            <div class="mode-card-title">PC MODE</div>
-            <div class="mode-card-desc">Watch Live 360°<br>on Browser</div>
+            <div class="mode-card-title">PC Mode</div>
+            <div class="mode-card-desc">Watch Live 360° on Browser</div>
           </div>
-          <div class="mode-card-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="mode-card-arrow" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12"/>
               <polyline points="12 5 19 12 12 19"/>
             </svg>
@@ -59,249 +98,279 @@
         </button>
 
         <!-- VR MODE -->
-        <button class="mode-card mode-card--vr" id="btn-vr-mode">
+        <button class="mode-card mode-card--vr" id="btn-vr-mode" aria-label="VR Mode — Enter 3D Camera Lobby">
           <div class="mode-card-badge" id="vr-badge">WebXR</div>
-          <div class="mode-card-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+          <div class="mode-card-icon" aria-hidden="true">
+            <!-- Bold headset icon -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 8h20v10a2 2 0 01-2 2H4a2 2 0 01-2-2V8z"/>
-              <circle cx="8.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
-              <circle cx="15.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
+              <circle cx="8.5" cy="13" r="2" fill="currentColor" stroke="none"/>
+              <circle cx="15.5" cy="13" r="2" fill="currentColor" stroke="none"/>
             </svg>
           </div>
           <div class="mode-card-body">
-            <div class="mode-card-title">VR MODE</div>
-            <div class="mode-card-desc">Enter 3D Camera<br>Lobby</div>
+            <div class="mode-card-title">VR Mode</div>
+            <div class="mode-card-desc">Enter 3D Camera Lobby</div>
           </div>
-          <div class="mode-card-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="mode-card-arrow" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12"/>
               <polyline points="12 5 19 12 12 19"/>
             </svg>
           </div>
         </button>
 
+      </nav>
+
+      <!-- Developer mode (hidden by default) -->
+      <div class="home-debug hidden" id="home-debug-link">
+        <button id="btn-debug-mode" class="home-debug-btn">Developer Mode</button>
       </div>
 
-      <!-- Debug mode link — hidden unless ?debug=1 -->
-      <div class="home-debug" id="home-debug-link" style="display:none">
-        <button id="btn-debug-mode" class="home-debug-btn">⚙ DEVELOPER MODE</button>
-      </div>
-
+      <!-- Relay status -->
       <footer class="home-footer">
-        <span id="home-relay-status" class="relay-status relay-status--unknown">● RELAY OFFLINE</span>
+        <span id="home-relay-status" class="relay-status relay-status--unknown" aria-live="polite">Relay Offline</span>
       </footer>
+
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       SCREEN 2 — PC MODE (Camera List + Viewer)
-  ════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════
+       SCREEN 2 — PC MODE
+  ════════════════════════════════════════════════════ -->
   <div id="screen-pc" class="screen">
-    <!-- BACK BUTTON -->
-    <button class="nav-back" id="pc-back-btn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+    <button class="nav-back" id="pc-back-btn" aria-label="Back to Home">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"/>
         <polyline points="12 19 5 12 12 5"/>
       </svg>
-      HOME
+      Home
     </button>
 
-    <!-- CAMERA LIST PANEL -->
+    <!-- Camera List -->
     <div id="pc-camera-list" class="pc-camera-list">
       <div class="pc-list-header">
-        <h2 class="pc-list-title">SELECT CAMERA</h2>
-        <div id="pc-poll-dot" class="poll-dot" title="Auto-refreshing"></div>
+        <h2 class="pc-list-title">Select Camera</h2>
+        <div id="pc-poll-dot" class="poll-dot" title="Auto-refreshing" aria-hidden="true"></div>
       </div>
-      <div id="pc-cameras" class="pc-cameras">
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <span>Loading cameras…</span>
+      <div id="pc-cameras" class="pc-cameras" role="list">
+        <div class="loading-state" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <span>Loading cameras</span>
         </div>
       </div>
     </div>
 
-    <!-- PC VIEWER PANEL (shown when camera selected) -->
+    <!-- PC Viewer Panel -->
     <div id="pc-viewer-panel" class="pc-viewer-panel hidden">
+
+      <!-- Floating header -->
       <div class="pc-viewer-header">
-        <button class="nav-back-inline" id="pc-viewer-back-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="nav-back-inline" id="pc-viewer-back-btn" aria-label="Back to Camera List">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"/>
             <polyline points="12 19 5 12 12 5"/>
           </svg>
-          CAMERA LIST
+          Camera List
         </button>
-        <div id="pc-viewer-status-bar">
-          <div id="pc-status-dot" class="status-dot"></div>
-          <span id="pc-status-text">360 VIEWER</span>
+
+        <div id="pc-viewer-status-bar" role="status" aria-live="polite">
+          <div id="pc-status-dot" class="status-dot" aria-hidden="true"></div>
+          <span id="pc-status-text">360 Viewer</span>
         </div>
+
         <div class="pc-viewer-controls">
-          <button id="pc-fullscreen-btn" class="icon-btn" title="Fullscreen">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button id="pc-fullscreen-btn" class="icon-btn" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="15 3 21 3 21 9"/>
               <polyline points="9 21 3 21 3 15"/>
               <line x1="21" y1="3" x2="14" y2="10"/>
               <line x1="3" y1="21" x2="10" y2="14"/>
             </svg>
           </button>
-          <button id="pc-vr-btn" class="icon-btn icon-btn--vr" title="Enter VR" style="display:none">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <button id="pc-vr-btn" class="icon-btn icon-btn--vr" title="Enter VR" aria-label="Enter VR" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 8h20v10a2 2 0 01-2 2H4a2 2 0 01-2-2V8z"/>
-              <circle cx="8.5" cy="13" r="1.5" fill="currentColor" stroke="none"/>
-              <circle cx="15.5" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+              <circle cx="8.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
+              <circle cx="15.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
             </svg>
           </button>
         </div>
       </div>
 
-      <!-- Three.js canvas for PC viewer -->
-      <canvas id="pc-canvas" class="viewer-canvas"></canvas>
+      <!-- Three.js canvas -->
+      <canvas id="pc-canvas" class="viewer-canvas" aria-label="360° viewer"></canvas>
 
-      <!-- Error / retry overlay -->
-      <div id="pc-viewer-overlay" class="viewer-overlay hidden">
+      <!-- Overlay: connecting / error / retry -->
+      <div id="pc-viewer-overlay" class="viewer-overlay hidden" role="dialog" aria-live="polite">
         <div class="viewer-overlay-box">
-          <div id="pc-overlay-icon" class="overlay-icon">
+          <div id="pc-overlay-icon" class="overlay-icon" aria-hidden="true">
             <div class="spinner"></div>
           </div>
-          <div id="pc-overlay-title" class="overlay-title">Connecting…</div>
+          <div id="pc-overlay-title" class="overlay-title">Connecting</div>
           <div id="pc-overlay-msg"   class="overlay-msg"></div>
-          <button id="pc-retry-btn" class="overlay-retry hidden">RETRY</button>
+          <button id="pc-retry-btn" class="overlay-retry hidden">Retry</button>
         </div>
       </div>
+
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       SCREEN 3 — VR MODE (Three.js Lobby + Viewer)
-  ════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════
+       SCREEN 3 — VR MODE
+  ════════════════════════════════════════════════════ -->
   <div id="screen-vr" class="screen">
-    <!-- Single canvas — used for lobby AND vr viewer -->
-    <canvas id="vr-canvas" class="viewer-canvas"></canvas>
 
-    <!-- VR LOBBY HUD (shown when in lobby) -->
-    <div id="vr-lobby-hud" class="vr-lobby-hud">
+    <!-- Three.js canvas (lobby + viewer share this) -->
+    <canvas id="vr-canvas" class="viewer-canvas" aria-label="3D Camera Space"></canvas>
+
+    <!-- Lobby HUD -->
+    <div id="vr-lobby-hud" class="vr-lobby-hud" role="banner">
       <div class="vr-hud-header">
-        <span class="vr-hud-logo">CN360<span style="color:#00C6FF">Live</span></span>
-        <button class="nav-back-inline" id="vr-home-btn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <span class="vr-hud-logo">CN360<span style="color:var(--accent)">Live</span></span>
+        <button class="nav-back-inline" id="vr-home-btn" aria-label="Back to Home">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"/>
             <polyline points="12 19 5 12 12 5"/>
           </svg>
-          HOME
+          Home
         </button>
       </div>
-      <div class="vr-hud-title">CAMERA LOBBY</div>
-      <div id="vr-lobby-hint" class="vr-hud-hint">Click a camera panel to connect</div>
-      <div id="vr-lobby-loading" class="vr-hud-loading hidden">
-        <div class="spinner spinner--sm"></div>
-        <span>Loading cameras…</span>
+      <div class="vr-hud-title">Camera Lobby</div>
+      <div id="vr-lobby-hint" class="vr-hud-hint" aria-live="polite">Click a camera panel to connect</div>
+      <div id="vr-lobby-loading" class="vr-hud-loading hidden" aria-live="polite">
+        <div class="spinner spinner--sm" aria-hidden="true"></div>
+        <span>Loading cameras</span>
       </div>
     </div>
 
-    <!-- VR VIEWER HUD (shown when in 360 viewer) -->
-    <div id="vr-viewer-hud" class="vr-viewer-hud hidden">
+    <!-- VR Viewer HUD -->
+    <div id="vr-viewer-hud" class="vr-viewer-hud hidden" role="status">
       <div class="vr-viewer-hud-bar">
-        <div id="vr-viewer-cam-name" class="vr-viewer-cam-name">CAMERA 01</div>
+        <div id="vr-viewer-cam-name" class="vr-viewer-cam-name">Camera 01</div>
         <div id="vr-viewer-status" class="vr-viewer-status">
-          <div class="status-dot status-dot--live"></div>
-          <span>LIVE</span>
+          <div class="status-dot-sm status-dot-sm--live" aria-hidden="true"></div>
+          <span>Live</span>
         </div>
       </div>
       <div class="vr-viewer-hud-actions">
-        <button id="vr-back-btn" class="vr-action-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button id="vr-back-btn" class="vr-action-btn" aria-label="Back to Lobby">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"/>
             <polyline points="12 19 5 12 12 5"/>
           </svg>
-          BACK TO LOBBY
+          Back to Lobby
         </button>
-        <button id="vr-enter-xr-btn" class="vr-action-btn vr-action-btn--accent" style="display:none">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <button id="vr-enter-xr-btn" class="vr-action-btn vr-action-btn--accent" style="display:none" aria-label="Enter XR">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M2 8h20v10a2 2 0 01-2 2H4a2 2 0 01-2-2V8z"/>
-            <circle cx="8.5" cy="13" r="1.3" fill="currentColor" stroke="none"/>
-            <circle cx="15.5" cy="13" r="1.3" fill="currentColor" stroke="none"/>
+            <circle cx="8.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
+            <circle cx="15.5" cy="13" r="1.8" fill="currentColor" stroke="none"/>
           </svg>
-          ENTER XR
+          Enter XR
         </button>
       </div>
     </div>
 
-    <!-- VR viewer error overlay -->
-    <div id="vr-viewer-overlay" class="viewer-overlay hidden">
+    <!-- VR viewer overlay -->
+    <div id="vr-viewer-overlay" class="viewer-overlay hidden" role="dialog" aria-live="polite">
       <div class="viewer-overlay-box">
-        <div id="vr-overlay-icon" class="overlay-icon">
+        <div id="vr-overlay-icon" class="overlay-icon" aria-hidden="true">
           <div class="spinner"></div>
         </div>
-        <div id="vr-overlay-title" class="overlay-title">Connecting…</div>
+        <div id="vr-overlay-title" class="overlay-title">Connecting</div>
         <div id="vr-overlay-msg"   class="overlay-msg"></div>
-        <button id="vr-retry-btn" class="overlay-retry hidden">RETRY</button>
+        <button id="vr-retry-btn" class="overlay-retry hidden">Retry</button>
       </div>
     </div>
+
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       SCREEN 4 — DEVELOPER MODE (debug=1)
-  ════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════
+       SCREEN 4 — DEVELOPER MODE
+  ════════════════════════════════════════════════════ -->
   <div id="screen-dev" class="screen">
-    <button class="nav-back" id="dev-back-btn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+    <button class="nav-back" id="dev-back-btn" aria-label="Back to Home">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"/>
         <polyline points="12 19 5 12 12 5"/>
       </svg>
-      HOME
+      Home
     </button>
 
-    <!-- Canvas fills the full screen -->
-    <canvas id="dev-canvas"></canvas>
+    <canvas id="dev-canvas" aria-label="Developer panorama viewer"></canvas>
 
-    <!-- Controls panel floats at the bottom -->
-    <div class="dev-panel">
-      <div class="dev-panel-title">⚙ DEVELOPER MODE</div>
-
+    <div class="dev-panel" role="complementary" aria-label="Developer controls">
+      <div class="dev-panel-title">Developer Mode</div>
       <div class="dev-controls">
-        <div class="dev-section-title">TEXTURE SOURCE</div>
+
+        <div class="dev-section-title">Texture Source</div>
         <div class="dev-btn-row">
-          <button id="dev-default-btn"  class="dev-btn active">Default Panorama</button>
-          <label  id="dev-upload-label" class="dev-btn">
+          <button id="dev-default-btn" class="dev-btn active">Default Panorama</button>
+          <label id="dev-upload-label" class="dev-btn">
             Upload Image
-            <input type="file" id="dev-file-input" accept="image/*" style="display:none"/>
+            <input type="file" id="dev-file-input" accept="image/*" style="display:none" aria-label="Upload equirectangular image"/>
           </label>
         </div>
 
-        <div class="dev-section-title" style="margin-top:16px">MANUAL STREAM URL</div>
+        <div class="dev-section-title" style="margin-top:8px">Stream URL</div>
         <div class="dev-url-row">
-          <input type="url" id="dev-stream-url" placeholder="https://relay/live/x5/index.m3u8" />
-          <button id="dev-connect-btn" class="dev-btn">CONNECT</button>
+          <input type="url" id="dev-stream-url" placeholder="https://relay/live/x5/index.m3u8" aria-label="Stream URL"/>
+          <button id="dev-connect-btn" class="dev-btn">Connect</button>
         </div>
 
-        <div class="dev-section-title" style="margin-top:16px">RELAY URL</div>
+        <div class="dev-section-title" style="margin-top:8px">Relay URL</div>
         <div class="dev-url-row">
-          <input type="url" id="dev-relay-url" placeholder="https://your-ngrok-url" />
-          <button id="dev-set-relay-btn" class="dev-btn">SET RELAY</button>
+          <input type="url" id="dev-relay-url" placeholder="https://your-relay-url" aria-label="Relay URL"/>
+          <button id="dev-set-relay-btn" class="dev-btn">Set Relay</button>
         </div>
 
-        <div id="dev-status" class="dev-status">Status: idle</div>
+        <div id="dev-status" class="dev-status" aria-live="polite">Status: idle</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       GLOBAL MODAL
+  ════════════════════════════════════════════════════ -->
+  <div id="modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title-el">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div id="modal-icon-el" class="modal-icon modal-icon--info" aria-hidden="true">
+          <!-- Icon set by JS -->
+        </div>
+        <div class="modal-header-text">
+          <div id="modal-title-el" class="modal-title"></div>
+          <div id="modal-msg-el"   class="modal-msg"></div>
+        </div>
+      </div>
+      <div class="modal-actions" id="modal-actions-el">
+        <!-- Buttons injected by JS -->
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
+  <!-- ═══════════════════════════════════════════════════
        GLOBAL TOAST
-  ════════════════════════════════════════════════ -->
-  <div id="toast" class="toast"></div>
+  ════════════════════════════════════════════════════ -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- ═══════════════════════════════════════════════
-       IMPORTMAP — Three.js from CDN
-  ════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════
+       IMPORTMAP — Three.js
+  ════════════════════════════════════════════════════ -->
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+      "three":         "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
     }
   }
   </script>
 
-  <!-- Entry point -->
   <script type="module" src="app.js"></script>
+
 </body>
 </html>

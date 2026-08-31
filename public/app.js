@@ -181,11 +181,11 @@ function goDevMode() {
 async function updateHomeRelayStatus() {
   const el = document.getElementById('home-relay-status');
   if (!RELAY_BASE) {
-    el.textContent  = '● RELAY OFFLINE';
-    el.className    = 'relay-status relay-status--offline';
+    el.textContent = 'Relay Offline';
+    el.className   = 'relay-status relay-status--offline';
     return;
   }
-  el.textContent = '● CHECKING RELAY…';
+  el.textContent = 'Checking relay…';
   el.className   = 'relay-status relay-status--checking';
 
   try {
@@ -195,20 +195,21 @@ async function updateHomeRelayStatus() {
     const allOff  = cameras.every(c => c.status === 'unreachable' || c.status === 'offline');
 
     if (allOff) {
-      el.textContent = '● RELAY OFFLINE';
+      el.textContent = 'Relay Offline';
       el.className   = 'relay-status relay-status--offline';
     } else if (anyLive) {
-      el.textContent = `● ${cameras.filter(c=>c.status==='streaming').length} CAMERA LIVE`;
+      const liveCount = cameras.filter(c => c.status === 'streaming').length;
+      el.textContent = `${liveCount} Camera${liveCount > 1 ? 's' : ''} Live`;
       el.className   = 'relay-status relay-status--live';
     } else if (anyWait) {
-      el.textContent = '● RELAY ONLINE — WAITING FOR CAMERA';
+      el.textContent = 'Relay Online — Waiting for Camera';
       el.className   = 'relay-status relay-status--waiting';
     } else {
-      el.textContent = '● RELAY ONLINE';
+      el.textContent = 'Relay Online';
       el.className   = 'relay-status relay-status--online';
     }
   } catch {
-    el.textContent = '● RELAY ERROR';
+    el.textContent = 'Relay Error';
     el.className   = 'relay-status relay-status--offline';
   }
 }
@@ -225,6 +226,67 @@ function showToast(msg) {
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
+
+// ─────────────────────────────────────────────────────────
+//  MODAL SYSTEM
+//  Usage: showModal({ icon, type, title, msg, actions })
+//  type: 'success' | 'error' | 'warning' | 'info' | 'loading'
+//  actions: [{ label, cls, onClick }]
+// ─────────────────────────────────────────────────────────
+
+const MODAL_ICONS = {
+  success: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#00FF88"><polyline points="20 6 9 17 4 12"/></svg>',
+  error:   '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#FF3344"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  warning: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#FFD000"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  info:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#00C6FF"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  loading: '<div class="spinner" style="width:22px;height:22px"></div>',
+};
+
+export function showModal({ type = 'info', title, msg, actions = [] }) {
+  const backdrop = document.getElementById('modal-backdrop');
+  const iconEl   = document.getElementById('modal-icon-el');
+  const titleEl  = document.getElementById('modal-title-el');
+  const msgEl    = document.getElementById('modal-msg-el');
+  const actsEl   = document.getElementById('modal-actions-el');
+
+  // Icon
+  iconEl.className = `modal-icon modal-icon--${type}`;
+  iconEl.innerHTML = MODAL_ICONS[type] ?? MODAL_ICONS.info;
+
+  // Text
+  titleEl.textContent = title ?? '';
+  msgEl.textContent   = msg   ?? '';
+
+  // Actions
+  actsEl.innerHTML = '';
+  if (actions.length === 0) {
+    // Default dismiss
+    const btn = document.createElement('button');
+    btn.className   = 'modal-btn modal-btn--secondary';
+    btn.textContent = 'Dismiss';
+    btn.onclick     = hideModal;
+    actsEl.appendChild(btn);
+  } else {
+    actions.forEach(a => {
+      const btn = document.createElement('button');
+      btn.className   = `modal-btn ${a.cls ?? 'modal-btn--secondary'}`;
+      btn.textContent = a.label;
+      btn.onclick     = () => { hideModal(); a.onClick?.(); };
+      actsEl.appendChild(btn);
+    });
+  }
+
+  backdrop.classList.add('open');
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) hideModal(); }, { once: true });
+}
+
+export function hideModal() {
+  document.getElementById('modal-backdrop').classList.remove('open');
+}
+
+// Expose globally for use from JS modules that don't import app.js
+window._cn360ShowModal = showModal;
+window._cn360HideModal = hideModal;
 
 // ─────────────────────────────────────────────────────────
 //  HOME — WebXR badge
@@ -301,7 +363,8 @@ function init() {
 
   // Dev mode
   if (DEBUG_MODE) {
-    document.getElementById('home-debug-link').style.display = 'block';
+    const debugLink = document.getElementById('home-debug-link');
+    debugLink.classList.remove('hidden');
     document.getElementById('btn-debug-mode').addEventListener('click', goDevMode);
   }
   initDevMode();

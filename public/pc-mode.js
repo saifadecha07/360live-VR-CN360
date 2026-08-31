@@ -85,7 +85,11 @@ export class PCMode {
 
   _renderCameraList(cameras) {
     if (!cameras.length) {
-      this._listEl.innerHTML = `<div class="empty-state">No cameras found</div>`;
+      this._listEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-title">No Cameras Found</div>
+          <div>No active cameras were detected.<br>Make sure the relay is running.</div>
+        </div>`;
       return;
     }
     this._listEl.innerHTML = cameras.map(cam => {
@@ -96,24 +100,30 @@ export class PCMode {
           class="camera-card ${canView ? '' : 'camera-card--disabled'}"
           data-id="${cam.id}"
           ${canView ? '' : 'disabled'}
+          role="listitem"
           aria-label="${cam.name} — ${info.label}"
         >
           <div class="camera-card-top">
             <div class="camera-card-name">${cam.name}</div>
             <div class="camera-card-status status--${info.cls}">
-              <span class="status-dot-sm"></span>${info.label}
+              <span class="status-dot-sm ${info.cls === 'live' ? 'status-dot-sm--live' : ''}" aria-hidden="true"></span>
+              ${info.label}
             </div>
           </div>
           <div class="camera-card-model">${cam.model}</div>
           <div class="camera-card-type">${cam.type.toUpperCase()} · 3840×1920</div>
-          <div class="camera-card-action">${canView ? 'VIEW CAMERA →' : 'UNAVAILABLE'}</div>
+          <div class="camera-card-action">
+            ${canView
+              ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg> View Camera`
+              : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Unavailable`
+            }
+          </div>
         </button>`;
     }).join('');
 
     this._listEl.querySelectorAll('.camera-card:not([disabled])').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id  = btn.dataset.id;
-        const cam = cameras.find(c => c.id === id);
+        const cam = cameras.find(c => c.id === btn.dataset.id);
         if (cam) this._openViewer(cam);
       });
     });
@@ -264,10 +274,10 @@ export class PCMode {
       this._overlayIcon.innerHTML = '<div class="spinner"></div>';
       this._retryBtn.classList.add('hidden');
     } else if (type === 'waiting') {
-      this._overlayIcon.innerHTML = '<div class="waiting-icon">⏳</div>';
+      this._overlayIcon.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFD000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
       this._retryBtn.classList.add('hidden');
     } else {
-      this._overlayIcon.innerHTML = '<div class="error-icon">⚠</div>';
+      this._overlayIcon.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFD000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
       this._retryBtn.classList.remove('hidden');
     }
   }
