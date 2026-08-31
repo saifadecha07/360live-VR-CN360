@@ -9,7 +9,7 @@
  *   startPolling(cb, ms)      → stopFn
  */
 
-import { RELAY_BASE, CAMERA_REGISTRY } from './config.js';
+import { RELAY_BASE, API_BASE, CAMERA_REGISTRY } from './config.js';
 
 /**
  * @typedef {{ id:string, name:string, model:string, path:string,
@@ -36,7 +36,9 @@ export async function fetchCameras(relayBase = RELAY_BASE) {
     }));
   }
 
-  const url = `/api/cameras?relay=${encodeURIComponent(relayBase)}`;
+  const url = API_BASE
+    ? `/api/cameras?relay=${encodeURIComponent(relayBase)}&api=${encodeURIComponent(API_BASE)}`
+    : `/api/cameras?relay=${encodeURIComponent(relayBase)}`;
 
   try {
     const res = await fetch(url, { cache: 'no-store' });

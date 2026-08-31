@@ -12,7 +12,8 @@
       "Bash(curl -s -L -o /dev/null -w \"%{http_code}\\\\n\" https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
       "Bash(curl -s https://36258fb238252e.lhr.life/v3/paths/list)",
       "Bash(curl -s \"https://cn360-360vr-live.vercel.app/api/cameras?relay=https://bd479e26924a02.lhr.life&api=https://36258fb238252e.lhr.life\")",
-      "Bash(cmd //c \"echo fix: vr-lobby resize before camera init | .\\\\deploy.bat\")"
+      "Bash(cmd //c \"echo fix: vr-lobby resize before camera init | .\\\\deploy.bat\")",
+      "Bash(cmd //c \"echo feat: auto-load default relay+api so PC/VR mode show live without query params | .\\\\deploy.bat\")"
     ]
   }
 }
