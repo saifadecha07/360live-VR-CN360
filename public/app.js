@@ -163,8 +163,12 @@ async function goVRViewer(camera) {
   _stopLobbyPoll?.();
   _stopLobbyPoll = null;
 
+  // If presenting in XR, carry the live session over to the viewer instead
+  // of ending it — ending it would kick the user out of VR back to Home.
+  const xrSession = _vrLobby._xrSession;
+
   // Destroy lobby — releases the WebGL context on vr-canvas
-  _vrLobby.destroy();
+  _vrLobby.destroy({ keepXRSession: !!xrSession });
   _vrLobby = null;
 
   document.getElementById('vr-lobby-hud').classList.add('hidden');
@@ -180,6 +184,8 @@ async function goVRViewer(camera) {
   });
 
   await _vrViewer.loadCamera(camera);
+
+  if (xrSession) await _vrViewer.adoptXRSession(xrSession);
 }
 
 function goDevMode() {

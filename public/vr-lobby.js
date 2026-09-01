@@ -93,9 +93,17 @@ export class VRLobby {
     }
   }
 
-  destroy() {
+  /**
+   * @param {{ keepXRSession?: boolean }} opts  Pass keepXRSession:true when
+   *   handing the live session off to another screen (e.g. the viewer) —
+   *   otherwise the session is ended, which would kick the user out of VR.
+   */
+  destroy(opts = {}) {
     this._stopLoop();
-    if (this._xrSession) { this._xrSession.end().catch(() => {}); this._xrSession = null; }
+    if (this._xrSession && !opts.keepXRSession) {
+      this._xrSession.end().catch(() => {});
+    }
+    this._xrSession = null;
     this._renderer.dispose();
     this._unbindEvents();
   }

@@ -100,6 +100,21 @@ export class VRViewer {
 
   forceResize() { this._pano?.forceResize(); }
 
+  /** Adopt an already-active XR session handed off from another screen (e.g. the lobby) */
+  async adoptXRSession(session) {
+    if (!this._pano) return;
+    this._xrSession = session;
+    await this._pano.setXRSession(session);
+    document.body.classList.add('vr-on');
+    this._enterXRBtn.textContent = 'EXIT XR';
+    session.addEventListener('end', () => {
+      document.body.classList.remove('vr-on');
+      this._enterXRBtn.textContent = 'ENTER XR';
+      if (this._pano) this._pano._state.isVR = false;
+      this._xrSession = null;
+    });
+  }
+
   // ── XR ────────────────────────────────────────────────────
 
   async _checkXR() {
