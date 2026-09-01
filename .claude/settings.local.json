@@ -11,7 +11,13 @@
       "Bash(./cloudflared.exe --version)",
       "Bash(curl -s http://127.0.0.1:9997/v3/paths/list)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://sys-dawn-nickel-governing.trycloudflare.com/live/x5/index.m3u8)",
-      "Bash(curl -s https://them-pee-taxes-fabric.trycloudflare.com/v3/paths/list)"
+      "Bash(curl -s https://them-pee-taxes-fabric.trycloudflare.com/v3/paths/list)",
+      "Bash(git config *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://github.com/6710615151/360live-VR-CN360)",
+      "Bash(cmdkey /list)",
+      "Bash(where gh *)",
+      "Bash(gh auth *)",
+      "Bash(cmd //c \"echo docs: add full setup PDF guide, link in README, update relay URLs | .\\\\deploy.bat\")"
     ]
   }
 }

@@ -7,6 +7,8 @@
 
 **Demo:** https://cn360-360vr-live.vercel.app
 
+📄 **[Setup Guide ฉบับเต็ม (PDF)](docs/CN360Live-Setup.pdf)** — ติดตั้ง relay + USB stream + tunnel + deploy ครบทุกขั้นตอน
+
 ---
 
 ## สารบัญ
@@ -117,6 +119,10 @@ https://your-site.vercel.app/?debug=1
 ---
 
 ## การติดตั้ง Relay (ทำครั้งเดียว)
+
+> **หมายเหตุ:** relay ปัจจุบันใช้กล้อง Insta360 X5 ต่อผ่าน **USB-C** และ tunnel ผ่าน
+> **localhost.run** แทน ngrok ในหัวข้อด้านล่าง — ดูขั้นตอนที่ตรงกับ setup จริงได้ใน
+> **[Setup Guide (PDF)](docs/CN360Live-Setup.pdf)**
 
 ### ขั้นตอนที่ 1 — ติดตั้ง MediaMTX
 
