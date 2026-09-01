@@ -12,6 +12,8 @@
 
 import * as THREE from 'three';
 
+const LOBBY_BG_URL = 'https://res.cloudinary.com/dmclcfxea/image/upload/v1788237250/IMG_3100_hjojo1.png';
+
 // ─── Colour palette (matches CSS design tokens) ─────────
 const C = {
   BG:           0x050A12,
@@ -47,6 +49,7 @@ export class VRLobby {
     this._drag       = { active: false, moved: false, x: 0, y: 0 };
     this._yaw        = 0;
     this._pitch      = 0;
+    this._xrSession  = null;
 
     this._setupRenderer();
     this._setupScene();
@@ -65,8 +68,32 @@ export class VRLobby {
 
   forceResize() { this._resize(); }
 
+  /** Request an immersive-vr session immediately (must be called from a user gesture) */
+  async enterXR() {
+    if (!navigator.xr) return false;
+    try {
+      const ok = await navigator.xr.isSessionSupported('immersive-vr');
+      if (!ok) return false;
+      this._xrSession = await navigator.xr.requestSession('immersive-vr', {
+        optionalFeatures: ['local-floor', 'bounded-floor'],
+      });
+      this._renderer.xr.setSession(this._xrSession);
+      document.body.classList.add('vr-on');
+      this._xrSession.addEventListener('end', () => {
+        document.body.classList.remove('vr-on');
+        this._xrSession = null;
+        this.opts.onExitXR?.();
+      });
+      return true;
+    } catch (err) {
+      console.error('[CN360] Lobby XR error:', err);
+      return false;
+    }
+  }
+
   destroy() {
     this._stopLoop();
+    if (this._xrSession) { this._xrSession.end().catch(() => {}); this._xrSession = null; }
     this._renderer.dispose();
     this._unbindEvents();
   }
@@ -90,6 +117,18 @@ export class VRLobby {
   _setupScene() {
     this._scene = new THREE.Scene();
     this._scene.background = new THREE.Color(C.BG);
+
+    // Equirectangular background pano — falls back to solid colour on failure
+    new THREE.TextureLoader().load(
+      LOBBY_BG_URL,
+      tex => {
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        this._scene.background = tex;
+      },
+      undefined,
+      () => { /* keep solid colour fallback */ }
+    );
 
     // Subtle depth fog — adds spatial depth without cost
     this._scene.fog = new THREE.Fog(C.BG, 8, 28);

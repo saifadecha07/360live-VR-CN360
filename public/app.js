@@ -129,7 +129,12 @@ function goVRLobby() {
   _vrLobby = new VRLobby(canvas, {
     onSelectCamera: camera => goVRViewer(camera),
     onToast: showToast,
+    onExitXR: goHome,
   });
+
+  // On XR-capable devices, jump straight into immersive-vr instead of
+  // showing the lobby as a flat webpage first.
+  _vrLobby.enterXR();
 
   // Load cameras and start polling
   document.getElementById('vr-lobby-loading').classList.remove('hidden');
