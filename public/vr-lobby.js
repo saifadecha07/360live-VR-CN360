@@ -50,11 +50,13 @@ export class VRLobby {
     this._yaw        = 0;
     this._pitch      = 0;
     this._xrSession  = null;
+    this._controllers = [];
 
     this._setupRenderer();
     this._setupScene();
     this._resize();
     this._buildEnvironment();
+    this._setupXRControllers();
     this._bindEvents();
     this._startLoop();
   }
@@ -473,6 +475,44 @@ export class VRLobby {
     return new THREE.CanvasTexture(c);
   }
 
+  // ── XR CONTROLLERS ─────────────────────────────────────
+
+  _setupXRControllers() {
+    const rayGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -5),
+    ]);
+    const rayMat = new THREE.LineBasicMaterial({ color: C.ACCENT, transparent: true, opacity: 0.6 });
+
+    for (let i = 0; i < 2; i++) {
+      const controller = this._renderer.xr.getController(i);
+      controller.visible = false;
+      controller.add(new THREE.Line(rayGeo.clone(), rayMat.clone()));
+      controller.addEventListener('connected',    () => { controller.visible = true; });
+      controller.addEventListener('disconnected', () => { controller.visible = false; });
+      controller.addEventListener('selectstart', () => this._xrSelect(controller));
+      this._scene.add(controller);
+      this._controllers.push(controller);
+    }
+  }
+
+  /** Raycast from an XR controller's pose and select a hovered panel */
+  _xrSelect(controller) {
+    const m = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
+    this._raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+    this._raycaster.ray.direction.set(0, 0, -1).applyMatrix4(m);
+
+    const hits = this._raycaster.intersectObjects(this._panels.map(p => p.hitMesh));
+    if (!hits.length) return;
+
+    const { camera, canView } = hits[0].object.userData;
+    if (!canView) {
+      this.opts.onToast?.(`${camera.name} is currently unavailable`);
+      return;
+    }
+    this.opts.onSelectCamera(camera);
+  }
+
   // ── INTERACTION ───────────────────────────────────────
 
   _bindEvents() {
@@ -622,7 +662,19 @@ export class VRLobby {
       });
 
       // ── Hover detection + scale ───────────────────
-      if (this._panels.length && !this._drag.active) {
+      if (this._panels.length && this._renderer.xr.isPresenting) {
+        // XR: hover follows whichever connected controller points at a panel
+        let newHov = null;
+        for (const controller of this._controllers) {
+          if (!controller.visible) continue;
+          const m = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
+          this._raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+          this._raycaster.ray.direction.set(0, 0, -1).applyMatrix4(m);
+          const hits = this._raycaster.intersectObjects(this._panels.map(p => p.hitMesh));
+          if (hits.length) { newHov = hits[0].object; break; }
+        }
+        this._hovered = newHov;
+      } else if (this._panels.length && !this._drag.active) {
         this._raycaster.setFromCamera(this._pointer, this._camera);
         const hits   = this._raycaster.intersectObjects(this._panels.map(p => p.hitMesh));
         const newHov = hits.length ? hits[0].object : null;
