@@ -17,7 +17,21 @@
       "Bash(cmdkey /list)",
       "Bash(where gh *)",
       "Bash(gh auth *)",
-      "Bash(cmd //c \"echo docs: add full setup PDF guide, link in README, update relay URLs | .\\\\deploy.bat\")"
+      "Bash(cmd //c \"echo docs: add full setup PDF guide, link in README, update relay URLs | .\\\\deploy.bat\")",
+      "Bash(echo \"exit:$?\")",
+      "Read(//c/Users/Acer/**)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl -s https://api.github.com/repos/saifadecha07/360live-VR-CN360/commits/a61fe5a)",
+      "Bash(gh api *)",
+      "Bash(curl -s https://api.github.com/repos/saifadecha07/360live-VR-CN360/commits/HEAD)",
+      "Bash(echo \"---exit code:$?---\")",
+      "Bash(curl -s -m 6 -o /dev/null -w \"HLS tunnel: %{http_code}\\\\n\" https://84a052c25cb62f.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -s -m 6 -o /dev/null -w \"API tunnel: %{http_code}\\\\n\" https://e26931aad42d14.lhr.life/v3/paths/list)",
+      "Bash(curl -s -m 6 https://cn360-360vr-live.vercel.app/config.js)",
+      "Bash(curl -s -m 8 -L -o /dev/null -w \"HLS: %{http_code}\\\\n\" https://c766395f0956cf.lhr.life/live/x5/index.m3u8)",
+      "Bash(curl -s -m 8 https://23fb943fd243f5.lhr.life/v3/paths/list)",
+      "Bash(cmd //c \"echo fix: relay tunnel URLs after ssh reconnect, tunnel had died | .\\\\deploy.bat\")"
     ]
   }
 }
