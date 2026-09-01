@@ -25,7 +25,9 @@
       "Bash(curl -s -m 5 http://127.0.0.1:9997/v3/paths/list)",
       "Bash(curl -s -m 8 -o /dev/null -w \"%{http_code}\\\\n\" https://bd479e26924a02.lhr.life/live/x5/index.m3u8)",
       "Bash(curl -s -m 8 -o /dev/null -w \"%{http_code}\\\\n\" https://36258fb238252e.lhr.life/v3/paths/list)",
-      "Bash(curl -s -m 8 \"https://cn360-360vr-live.vercel.app/api/cameras?relay=https://bd479e26924a02.lhr.life&api=https://36258fb238252e.lhr.life\")"
+      "Bash(curl -s -m 8 \"https://cn360-360vr-live.vercel.app/api/cameras?relay=https://bd479e26924a02.lhr.life&api=https://36258fb238252e.lhr.life\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://res.cloudinary.com/dmclcfxea/image/upload/v1788237250/IMG_3100_hjojo1.png\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://res.cloudinary.com/dmclcfxea/image/upload/v1788237238/6F8B5816-692C-46D3-891B-AC8500D8ADF2_rj0pae.png\")"
     ]
   }
 }

@@ -376,7 +376,6 @@ function initDevMode() {
 
 function init() {
   // Wire home buttons
-  document.getElementById('btn-pc-mode').addEventListener('click', goPCMode);
   document.getElementById('btn-server-mode').addEventListener('click', goServerMode);
   document.getElementById('btn-vr-mode').addEventListener('click', goVRLobby);
   document.getElementById('vr-home-btn').addEventListener('click', goHome);

@@ -16,6 +16,8 @@
 import * as THREE from 'three';
 import { SPHERE_SEGMENTS } from './config.js';
 
+const DEFAULT_PANO_URL = 'https://res.cloudinary.com/dmclcfxea/image/upload/v1788237250/IMG_3100_hjojo1.png';
+
 export class Panorama {
   /**
    * @param {HTMLCanvasElement} canvas
@@ -95,10 +97,10 @@ export class Panorama {
 
   // ── PUBLIC API ────────────────────────────────────────────
 
-  /** Load procedural default panorama */
+  /** Load default background panorama (falls back to procedural on failure) */
   useDefaultTexture() {
     this._disposeTexture();
-    this._buildDefaultTexture();
+    this.setImageTexture(DEFAULT_PANO_URL);
     this._state.source = 'default';
     this._emitStatus('360 VIEWER', 'ready');
   }
@@ -164,7 +166,7 @@ export class Panorama {
       this._emitToast(msg);
       this._emitStatus('360', 'ready');
       this.opts.onStreamError?.(msg);
-      this._buildDefaultTexture();
+      this.setImageTexture(DEFAULT_PANO_URL);
     };
 
     const isM3u8       = /\.m3u8($|\?)/i.test(url);
@@ -191,7 +193,7 @@ export class Panorama {
   /** Reset back to default panorama, stop any video */
   reset() {
     this._disposeTexture();
-    this._buildDefaultTexture();
+    this.setImageTexture(DEFAULT_PANO_URL);
     this._state.source = 'default';
     this._state.yaw   = 0;
     this._state.pitch = 0;
