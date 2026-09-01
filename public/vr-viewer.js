@@ -12,7 +12,9 @@ import { getBestStreamUrl } from './config.js';
 export class VRViewer {
   /**
    * @param {HTMLCanvasElement} canvas
-   * @param {{ onBack: ()=>void, toast: (msg:string)=>void, relay: string }} opts
+   * @param {{ onBack: ()=>void, toast: (msg:string)=>void, relay: string, renderer?: object }} opts
+   *   Pass `renderer` to reuse an existing WebGLRenderer (e.g. handed off
+   *   from the lobby while presenting in XR) instead of creating a new one.
    */
   constructor(canvas, opts) {
     this.canvas = canvas;
@@ -62,6 +64,7 @@ export class VRViewer {
     if (this._pano) { this._pano.destroy(); this._pano = null; }
 
     this._pano = new Panorama(this.canvas, {
+      renderer: this.opts.renderer,
       onStatus: (text, type) => this._setHudStatus(text, type),
       onToast:  msg => this.opts.toast(msg),
       onStreamConnected: () => {

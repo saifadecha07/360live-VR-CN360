@@ -94,9 +94,13 @@ export class VRLobby {
   }
 
   /**
-   * @param {{ keepXRSession?: boolean }} opts  Pass keepXRSession:true when
-   *   handing the live session off to another screen (e.g. the viewer) —
-   *   otherwise the session is ended, which would kick the user out of VR.
+   * @param {{ keepXRSession?: boolean, keepRenderer?: boolean }} opts
+   *   Pass keepXRSession:true when handing the live session off to another
+   *   screen (e.g. the viewer) — otherwise the session is ended, which
+   *   would kick the user out of VR. Pass keepRenderer:true in the same
+   *   situation so the caller can hand this renderer to the next screen
+   *   instead of it being disposed — creating a second WebGLRenderer on
+   *   the same canvas while a session is bound to it breaks XR rendering.
    */
   destroy(opts = {}) {
     this._stopLoop();
@@ -104,7 +108,7 @@ export class VRLobby {
       this._xrSession.end().catch(() => {});
     }
     this._xrSession = null;
-    this._renderer.dispose();
+    if (!opts.keepRenderer) this._renderer.dispose();
     this._unbindEvents();
   }
 
