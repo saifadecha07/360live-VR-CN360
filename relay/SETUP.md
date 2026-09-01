@@ -38,21 +38,26 @@ ffmpeg -list_devices true -f dshow -i dummy
 ffmpeg -f dshow -list_options true -i video="Insta360 X5"
 ```
 
-### 3. Push stream เข้า MediaMTX
+> **สำคัญมาก:** ต้อง capture ที่ **2880x1440 (อัตราส่วน 2:1) เท่านั้น** — ตามเอกสาร Insta360
+> เฉพาะ resolution นี้กล้องถึงจะ auto-output เป็น **stitched equirectangular panorama**
+> (ภาพ 360 ต่อเนื่องจริง) ถ้า capture ที่ 1920x1080 (16:9) กล้องจะสลับไปโหมด
+> **Reframe/dual-lens** แทน (เฟรมหน้า/หลังแยกกันซ้อนกัน ไม่ใช่ panorama) แม้ ffmpeg
+> จะ capture ได้ปกติไม่มี error ก็ตาม — เคยเสียเวลา debug เรื่องนี้เพราะลด resolution
+> ไปแก้ปัญหา ffmpeg ค้าง (ดูข้อควรระวังท้ายไฟล์) แล้วดันได้ภาพผิดโหมดแทน
+> **ห้าม scale ลงจาก 2880x1440 — ให้ capture/encode ตรงที่ 2880x1440 เท่านั้น**
 
-ตัวอย่าง capture ที่ native resolution แล้ว scale ลง:
+### 3. Push stream เข้า MediaMTX
 
 ```
 ffmpeg ^
   -f dshow -video_size 2880x1440 -framerate 30 -vcodec mjpeg -i video="Insta360 X5" ^
   -f dshow -i audio="Microphone (Insta360 X5)" ^
-  -vf scale=1920:960 ^
-  -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p -b:v 4000k -maxrate 4000k -bufsize 8000k -g 60 ^
-  -c:a aac -b:a 128k ^
+  -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p -b:v 4000k -maxrate 4000k -bufsize 8000k -g 60 -threads 4 ^
+  -c:a aac -b:a 96k ^
   -f flv rtmp://127.0.0.1:1935/live/x5
 ```
 
-ปรับชื่อ device / resolution ตามที่เจอใน step 2
+ปรับชื่อ device ตามที่เจอใน step 2 — **อย่าเปลี่ยน `-video_size` จาก 2880x1440**
 
 เช็คว่า path ขึ้นจริง:
 
