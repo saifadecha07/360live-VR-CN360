@@ -122,6 +122,7 @@ export class VRLobby {
     this._renderer.toneMapping      = THREE.ACESFilmicToneMapping;
     this._renderer.toneMappingExposure = 0.85;
     this._renderer.xr.enabled = true;
+    this._renderer.xr.setReferenceSpaceType('local-floor');
   }
 
   _setupScene() {

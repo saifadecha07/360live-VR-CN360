@@ -45,6 +45,7 @@ export class Panorama {
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.xr.enabled = true;
+    this.renderer.xr.setReferenceSpaceType('local-floor');
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping      = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
