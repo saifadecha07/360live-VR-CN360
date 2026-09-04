@@ -168,12 +168,15 @@ export class Panorama {
       this._buildDefaultTexture();
     };
 
-    const isM3u8       = /\.m3u8($|\?)/i.test(url);
-    const hasNativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
+    const isM3u8 = /\.m3u8($|\?)/i.test(url);
 
-    // Chrome/Edge/most Android browsers can't play .m3u8 via native <video>.
-    // Safari (and Pico's browser on some builds) can — prefer that path when available.
-    if (isM3u8 && !hasNativeHls && window.Hls && window.Hls.isSupported()) {
+    // Always prefer hls.js (MSE-based) over a browser's native HLS <video>
+    // pipeline when available — native implementations vary wildly (e.g.
+    // Pico's Chromium reports support via canPlayType but its Android
+    // MediaPlayer pipeline fails to decode this stream with a hard
+    // "external renderer failed" error). Only fall back to native when
+    // hls.js truly isn't available.
+    if (isM3u8 && window.Hls && window.Hls.isSupported()) {
       const hls = new window.Hls({ enableWorker: true });
       this._hls = hls;
       let fatalRetries = 0;
