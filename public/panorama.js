@@ -176,9 +176,23 @@ export class Panorama {
     if (isM3u8 && !hasNativeHls && window.Hls && window.Hls.isSupported()) {
       const hls = new window.Hls({ enableWorker: true });
       this._hls = hls;
-      hls.on(window.Hls.Events.MANIFEST_PARSED, onReady);
+      let fatalRetries = 0;
+      const MAX_FATAL_RETRIES = 4;
+      hls.on(window.Hls.Events.MANIFEST_PARSED, () => { fatalRetries = 0; onReady(); });
+      hls.on(window.Hls.Events.FRAG_LOADED, () => { fatalRetries = 0; });
       hls.on(window.Hls.Events.ERROR, (_evt, data) => {
-        if (data.fatal) onFail();
+        if (!data.fatal) return;
+        // Flaky networks (e.g. a headset's Wi-Fi) throw fatal network/media
+        // errors that are recoverable — retry a few times before giving up.
+        if (fatalRetries < MAX_FATAL_RETRIES &&
+            (data.type === window.Hls.ErrorTypes.NETWORK_ERROR ||
+             data.type === window.Hls.ErrorTypes.MEDIA_ERROR)) {
+          fatalRetries++;
+          if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+          else hls.recoverMediaError();
+        } else {
+          onFail();
+        }
       });
       hls.loadSource(url);
       hls.attachMedia(video);
