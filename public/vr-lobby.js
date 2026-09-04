@@ -50,6 +50,7 @@ export class VRLobby {
     this._yaw        = 0;
     this._pitch      = 0;
     this._xrSession  = null;
+    this._destroying = false;
     this._controllers = [];
 
     this._setupRenderer();
@@ -84,7 +85,10 @@ export class VRLobby {
       this._xrSession.addEventListener('end', () => {
         document.body.classList.remove('vr-on');
         this._xrSession = null;
-        this.opts.onExitXR?.();
+        // Only bounce to Home on an unexpected end (headset removed, etc).
+        // A deliberate destroy() (e.g. navigating to the viewer) also ends
+        // the session but should not trigger this.
+        if (!this._destroying) this.opts.onExitXR?.();
       });
       return true;
     } catch (err) {
@@ -93,22 +97,14 @@ export class VRLobby {
     }
   }
 
-  /**
-   * @param {{ keepXRSession?: boolean, keepRenderer?: boolean }} opts
-   *   Pass keepXRSession:true when handing the live session off to another
-   *   screen (e.g. the viewer) — otherwise the session is ended, which
-   *   would kick the user out of VR. Pass keepRenderer:true in the same
-   *   situation so the caller can hand this renderer to the next screen
-   *   instead of it being disposed — creating a second WebGLRenderer on
-   *   the same canvas while a session is bound to it breaks XR rendering.
-   */
-  destroy(opts = {}) {
+  destroy() {
     this._stopLoop();
-    if (this._xrSession && !opts.keepXRSession) {
+    if (this._xrSession) {
+      this._destroying = true;
       this._xrSession.end().catch(() => {});
     }
     this._xrSession = null;
-    if (!opts.keepRenderer) this._renderer.dispose();
+    this._renderer.dispose();
     this._unbindEvents();
   }
 

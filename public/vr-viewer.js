@@ -12,9 +12,7 @@ import { getBestStreamUrl } from './config.js';
 export class VRViewer {
   /**
    * @param {HTMLCanvasElement} canvas
-   * @param {{ onBack: ()=>void, toast: (msg:string)=>void, relay: string, renderer?: object }} opts
-   *   Pass `renderer` to reuse an existing WebGLRenderer (e.g. handed off
-   *   from the lobby while presenting in XR) instead of creating a new one.
+   * @param {{ onBack: ()=>void, toast: (msg:string)=>void, relay: string }} opts
    */
   constructor(canvas, opts) {
     this.canvas = canvas;
@@ -64,7 +62,6 @@ export class VRViewer {
     if (this._pano) { this._pano.destroy(); this._pano = null; }
 
     this._pano = new Panorama(this.canvas, {
-      renderer: this.opts.renderer,
       onStatus: (text, type) => this._setHudStatus(text, type),
       onToast:  msg => this.opts.toast(msg),
       onStreamConnected: () => {
@@ -102,21 +99,6 @@ export class VRViewer {
   }
 
   forceResize() { this._pano?.forceResize(); }
-
-  /** Adopt an already-active XR session handed off from another screen (e.g. the lobby) */
-  async adoptXRSession(session) {
-    if (!this._pano) return;
-    this._xrSession = session;
-    await this._pano.setXRSession(session);
-    document.body.classList.add('vr-on');
-    this._enterXRBtn.textContent = 'EXIT XR';
-    session.addEventListener('end', () => {
-      document.body.classList.remove('vr-on');
-      this._enterXRBtn.textContent = 'ENTER XR';
-      if (this._pano) this._pano._state.isVR = false;
-      this._xrSession = null;
-    });
-  }
 
   // ── XR ────────────────────────────────────────────────────
 

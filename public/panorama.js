@@ -37,22 +37,15 @@ export class Panorama {
     const seg = opts.segments ?? SPHERE_SEGMENTS.viewer;
 
     // ── Renderer ──────────────────────────────────────────
-    // Reuse an externally-provided renderer when handed off from another
-    // screen while presenting in XR — creating a second WebGLRenderer on
-    // the same canvas while a session is already bound to it breaks XR
-    // rendering. Only create+own a renderer when none is supplied.
-    this._ownsRenderer = !opts.renderer;
-    this.renderer = opts.renderer ?? new THREE.WebGLRenderer({
+    this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
       alpha: false,
       powerPreference: 'high-performance',
     });
-    if (this._ownsRenderer) {
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      this.renderer.xr.enabled = true;
-      this.renderer.xr.setReferenceSpaceType('local-floor');
-    }
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.xr.enabled = true;
+    this.renderer.xr.setReferenceSpaceType('local-floor');
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping      = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -210,12 +203,7 @@ export class Panorama {
 
   /** Hand off to WebXR session */
   async setXRSession(session) {
-    // If this renderer was reused from another screen, the session may
-    // already be bound to it — re-calling setSession is redundant and risks
-    // a render hiccup, so skip it in that case.
-    if (this.renderer.xr.getSession() !== session) {
-      this.renderer.xr.setSession(session);
-    }
+    this.renderer.xr.setSession(session);
     this._state.isVR = true;
   }
 
@@ -226,7 +214,7 @@ export class Panorama {
   destroy() {
     this._stopLoop();
     this._disposeTexture();
-    if (this._ownsRenderer) this.renderer.dispose();
+    this.renderer.dispose();
 
     window.removeEventListener('resize',    this._onResize);
     this.canvas.removeEventListener('mousedown',  this._onMouseDown);
