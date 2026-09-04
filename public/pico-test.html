@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Pico Video Test</title></head>
+<body style="background:#000;color:#0f0;font-family:monospace;font-size:20px;">
+<div id="log">loading...</div>
+<video id="v" controls autoplay muted playsinline style="width:100%;max-width:900px;display:block;margin-top:10px;"></video>
+<script>
+const log = document.getElementById('log');
+const v = document.getElementById('v');
+const url = 'https://tap-ins-confidence-bottom.trycloudflare.com/live/x5/index.m3u8';
+log.textContent = 'canPlayType HLS: "' + v.canPlayType('application/vnd.apple.mpegurl') + '"';
+v.src = url;
+v.addEventListener('loadedmetadata', () => { log.textContent += ' | loadedmetadata OK'; });
+v.addEventListener('canplay', () => { log.textContent += ' | canplay OK'; });
+v.addEventListener('playing', () => { log.textContent += ' | PLAYING OK'; });
+v.addEventListener('error', () => {
+  const e = v.error;
+  log.textContent += ' | ERROR code=' + (e && e.code) + ' msg=' + (e && e.message);
+});
+</script>
+</body>
+</html>
