@@ -177,7 +177,12 @@ export class Panorama {
     // "external renderer failed" error). Only fall back to native when
     // hls.js truly isn't available.
     if (isM3u8 && window.Hls && window.Hls.isSupported()) {
-      const hls = new window.Hls({ enableWorker: true });
+      const hls = new window.Hls({
+        enableWorker: true,
+        // Stay closer to the live edge instead of the default 3-segment buffer.
+        liveSyncDurationCount: 2,
+        liveMaxLatencyDurationCount: 4,
+      });
       this._hls = hls;
       let fatalRetries = 0;
       const MAX_FATAL_RETRIES = 4;
