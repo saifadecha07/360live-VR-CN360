@@ -5,3 +5,4 @@ relay/auto.crt
 relay/LICENSE
 relay/mediamtx.log
 relay/recordings/
+echo __pycache__/ >> .gitignore
